@@ -1,0 +1,66 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Hero from '../components/Hero.astro';
+import Skills from '../components/Skills.astro';
+import Projects from '../components/Projects.astro';
+import BlogCard from '../components/BlogCard.astro';
+import { profile } from '../data/profile';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+---
+
+<Layout title="Harsh Yadav">
+  <Hero />
+  <Skills />
+
+  <section class="mx-auto max-w-content px-5 sm:px-8 py-16 border-t border-border/60">
+    <div class="flex items-baseline justify-between mb-8">
+      <div>
+        <p class="log-eyebrow mb-3">projects.featured</p>
+        <h2 class="font-mono text-2xl text-ink">Selected work</h2>
+      </div>
+      <a href="/projects" class="font-mono text-sm text-mint hover:text-mint-bright">all projects →</a>
+    </div>
+    <Projects featuredOnly />
+  </section>
+
+  <section class="mx-auto max-w-content px-5 sm:px-8 py-16 border-t border-border/60">
+    <div class="flex items-baseline justify-between mb-8">
+      <div>
+        <p class="log-eyebrow mb-3">blog.latest</p>
+        <h2 class="font-mono text-2xl text-ink">Recent writing</h2>
+      </div>
+      <a href="/blog" class="font-mono text-sm text-mint hover:text-mint-bright">read the blog →</a>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {
+        posts.map((post) => (
+          <BlogCard
+            slug={post.id}
+            title={post.data.title}
+            description={post.data.description}
+            pubDate={post.data.pubDate}
+            tags={post.data.tags}
+            body={post.body}
+          />
+        ))
+      }
+    </div>
+  </section>
+
+  <section id="contact" class="mx-auto max-w-content px-5 sm:px-8 py-20 border-t border-border/60">
+    <div class="card p-10 text-center">
+      <p class="log-eyebrow mb-4 justify-center">contact.init</p>
+      <h2 class="font-mono text-2xl sm:text-3xl text-ink">{profile.contact.heading}</h2>
+      <p class="text-ink-muted mt-2">{profile.contact.body}</p>
+      <div class="flex flex-wrap justify-center gap-3 mt-7 font-mono text-sm">
+        <a href={profile.social.github} target="_blank" rel="noopener noreferrer" class="btn-secondary">GitHub</a>
+        <a href={profile.social.linkedin} target="_blank" rel="noopener noreferrer" class="btn-secondary">LinkedIn</a>
+        <a href={`mailto:${profile.email}`} class="btn-primary">Email</a>
+      </div>
+    </div>
+  </section>
+</Layout>

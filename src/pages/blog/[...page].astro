@@ -1,0 +1,137 @@
+---
+import type { GetStaticPaths, Page } from 'astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import BlogCard from '../../components/BlogCard.astro';
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+  );
+  return paginate(posts, { pageSize: 9 });
+}) satisfies GetStaticPaths;
+
+export interface Props {
+  page: Page<CollectionEntry<'blog'>>;
+}
+
+const { page } = Astro.props;
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const allTags = [...new Set(allPosts.flatMap((p) => p.data.tags))].sort();
+---
+
+<Layout
+  title="Blog"
+  description="Deep dives into Kubernetes, cloud infrastructure, observability, reliability, and DevOps."
+>
+  <section class="mx-auto max-w-content px-5 sm:px-8 py-16">
+    <p class="log-eyebrow mb-4">blog.index</p>
+    <h1 class="font-mono text-3xl sm:text-4xl text-ink mb-3">Technical Writing</h1>
+    <p class="text-ink-muted max-w-2xl leading-7">
+      Deep dives into Kubernetes, cloud infrastructure, observability, reliability, and DevOps.
+    </p>
+
+    <div class="mt-8 flex flex-col sm:flex-row gap-4 sm:items-center">
+      <div class="relative flex-1 max-w-sm">
+        <input
+          id="blog-search"
+          type="search"
+          placeholder="Search articles…"
+          class="w-full rounded-md border border-border bg-surface px-3 py-2 font-mono text-sm text-ink placeholder:text-ink-faint focus:border-mint/50 outline-none"
+        />
+      </div>
+      <div id="tag-filters" class="flex flex-wrap gap-2">
+        <button data-tag="" class="pill tag-filter-btn border-mint text-mint cursor-pointer">all</button>
+        {allTags.map((tag) => (
+          <button data-tag={tag} class="pill tag-filter-btn cursor-pointer">#{tag}</button>
+        ))}
+      </div>
+    </div>
+
+    <div id="blog-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
+      {
+        page.data.map((post, i) => (
+          <BlogCard
+            slug={post.id}
+            title={post.data.title}
+            description={post.data.description}
+            pubDate={post.data.pubDate}
+            tags={post.data.tags}
+            body={post.body}
+            featured={page.currentPage === 1 && i === 0}
+          />
+        ))
+      }
+    </div>
+
+    <p id="no-results" class="hidden text-ink-faint font-mono text-sm mt-10">
+      No articles match that search.
+    </p>
+
+    {
+      page.lastPage > 1 && (
+        <nav class="flex items-center justify-center gap-4 mt-14 font-mono text-sm" aria-label="Pagination">
+          {page.url.prev ? (
+            <a href={page.url.prev} class="btn-secondary">← Newer</a>
+          ) : (
+            <span class="btn-secondary opacity-40 pointer-events-none">← Newer</span>
+          )}
+          <span class="text-ink-faint">
+            page {page.currentPage} / {page.lastPage}
+          </span>
+          {page.url.next ? (
+            <a href={page.url.next} class="btn-secondary">Older →</a>
+          ) : (
+            <span class="btn-secondary opacity-40 pointer-events-none">Older →</span>
+          )}
+        </nav>
+      )
+    }
+  </section>
+</Layout>
+
+<script is:inline>
+  (function () {
+    const grid = document.getElementById('blog-grid');
+    const cards = Array.from(grid?.children ?? []);
+    const searchInput = document.getElementById('blog-search');
+    const tagButtons = Array.from(document.querySelectorAll('.tag-filter-btn'));
+    const noResults = document.getElementById('no-results');
+
+    const ACTIVE_CLASSES = ['border-mint', 'text-mint'];
+    function setActive(btn, isActive) {
+      ACTIVE_CLASSES.forEach((c) => btn.classList.toggle(c, isActive));
+    }
+
+    let activeTag = new URLSearchParams(location.search).get('tag') || '';
+    tagButtons.forEach((btn) => setActive(btn, btn.dataset.tag === activeTag));
+
+    function applyFilters() {
+      const q = (searchInput?.value || '').toLowerCase().trim();
+      let visibleCount = 0;
+      cards.forEach((card) => {
+        const title = card.dataset.title || '';
+        const desc = card.dataset.description || '';
+        const tags = card.dataset.tags || '';
+        const matchesQuery = !q || title.includes(q) || desc.includes(q) || tags.includes(q);
+        const matchesTag = !activeTag || tags.split(',').includes(activeTag);
+        const visible = matchesQuery && matchesTag;
+        card.style.display = visible ? '' : 'none';
+        if (visible) visibleCount++;
+      });
+      noResults?.classList.toggle('hidden', visibleCount > 0);
+    }
+
+    searchInput?.addEventListener('input', applyFilters);
+    tagButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        activeTag = btn.dataset.tag || '';
+        tagButtons.forEach((b) => setActive(b, b === btn));
+        applyFilters();
+      });
+    });
+
+    applyFilters();
+  })();
+</script>

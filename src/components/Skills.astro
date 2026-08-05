@@ -1,0 +1,21 @@
+---
+import { skills } from '../data/skills';
+---
+
+<section class="mx-auto max-w-content px-5 sm:px-8 py-16 border-t border-border/60">
+  <p class="log-eyebrow mb-3">stack.dump --grouped</p>
+  <h2 class="font-mono text-2xl text-ink mb-8">What I work with</h2>
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    {
+      skills.map((group) => (
+        <div class="card card-hover p-5">
+          <h3 class="font-mono text-xs uppercase tracking-wide text-mint mb-3">{group.title}</h3>
+          <ul class="space-y-1.5 text-sm text-ink-muted">
+            {group.items.map((item) => <li>{item}</li>)}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
+</section>

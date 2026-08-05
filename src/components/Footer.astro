@@ -1,0 +1,29 @@
+---
+import { profile } from '../data/profile';
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-border/60 mt-24">
+  <div class="mx-auto max-w-content px-5 sm:px-8 py-10 flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+    <div>
+      <p class="font-mono text-sm text-ink">{profile.name}</p>
+      <p class="text-sm text-ink-muted mt-1">{profile.role} / {profile.roleSecondary}</p>
+      <p class="font-mono text-xs text-ink-faint mt-3">
+        Kubernetes • Cloud • Infrastructure • Reliability
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-2 font-mono text-sm">
+      <a href={profile.social.github} target="_blank" rel="noopener noreferrer" class="text-ink-muted hover:text-mint">
+        GitHub
+      </a>
+      <a href={profile.social.linkedin} target="_blank" rel="noopener noreferrer" class="text-ink-muted hover:text-mint">
+        LinkedIn
+      </a>
+      <a href="/rss.xml" class="text-ink-muted hover:text-mint">RSS</a>
+    </div>
+  </div>
+  <div class="mx-auto max-w-content px-5 sm:px-8 pb-8">
+    <p class="font-mono text-xs text-ink-faint">© {year} {profile.name}</p>
+  </div>
+</footer>
