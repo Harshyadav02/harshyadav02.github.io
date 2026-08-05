@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+  }
+
+  html.light body {
+    @apply bg-paper text-[#1b2126];
+  }
+
+  ::selection {
+    @apply bg-mint/30 text-ink;
+  }
+
+  a {
+    @apply underline-offset-2;
+  }
+
+  :focus-visible {
+    outline: 2px solid theme('colors.mint.DEFAULT');
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  /* Structural "log line" section eyebrow — the site's signature device.
+     Every major section is framed like a monitoring readout. */
+  .log-eyebrow {
+    @apply font-mono text-xs tracking-widest text-mint uppercase flex items-center gap-2;
+  }
+  .log-eyebrow::before {
+    content: '';
+    @apply inline-block w-1.5 h-1.5 rounded-full bg-mint;
+    box-shadow: 0 0 0 3px rgba(74, 222, 154, 0.15);
+  }
+
+  .card {
+    @apply bg-surface border border-border rounded-lg;
+  }
+
+  .card-hover {
+    @apply transition-colors duration-200 hover:border-mint/40;
+  }
+
+  .pill {
+    @apply inline-flex items-center rounded-md border border-border bg-surface-raised px-2 py-0.5 text-xs font-mono text-ink-muted;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded-md bg-mint px-4 py-2 font-mono text-sm font-medium text-bg transition-colors hover:bg-mint-bright;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 font-mono text-sm text-ink transition-colors hover:border-mint/50 hover:text-mint;
+  }
+
+  .prose-article {
+    @apply max-w-prose mx-auto;
+  }
+
+  .prose-article :where(h2, h3, h4) {
+    @apply font-mono text-ink scroll-mt-24;
+  }
+  .prose-article h2 {
+    @apply text-xl mt-12 mb-4 border-t border-border pt-8;
+  }
+  .prose-article h3 {
+    @apply text-lg mt-8 mb-3;
+  }
+  .prose-article p {
+    @apply text-ink-muted leading-7 mb-5;
+  }
+  html.light .prose-article p {
+    @apply text-[#3a4450];
+  }
+  .prose-article a {
+    @apply text-mint hover:text-mint-bright;
+  }
+  .prose-article ul, .prose-article ol {
+    @apply text-ink-muted mb-5 ml-5 space-y-1.5;
+  }
+  .prose-article ul { @apply list-disc; }
+  .prose-article ol { @apply list-decimal; }
+  .prose-article blockquote {
+    @apply border-l-2 border-mint/50 pl-4 italic text-ink-muted my-6;
+  }
+  .prose-article img {
+    @apply rounded-md border border-border my-6;
+  }
+  .prose-article table {
+    @apply w-full text-sm my-6 border border-border rounded-md overflow-hidden;
+  }
+  .prose-article th {
+    @apply bg-surface-raised text-left font-mono text-xs uppercase tracking-wide text-ink-muted px-3 py-2 border-b border-border;
+  }
+  .prose-article td {
+    @apply px-3 py-2 border-b border-border/60 text-ink-muted;
+  }
+  .prose-article code {
+    @apply font-mono text-[0.85em] text-mint bg-surface-raised px-1.5 py-0.5 rounded;
+  }
+  .prose-article pre {
+    @apply rounded-lg border border-border !bg-[#0d1013] p-4 overflow-x-auto my-6 text-sm;
+  }
+  .prose-article pre code {
+    @apply bg-transparent text-inherit p-0;
+  }
+
+  .copy-btn {
+    @apply absolute top-2.5 right-2.5 rounded-md border border-border bg-surface px-2 py-1 text-[10px] font-mono uppercase tracking-wide text-ink-muted opacity-0 transition-opacity hover:text-mint;
+  }
+}

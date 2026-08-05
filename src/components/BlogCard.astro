@@ -1,0 +1,45 @@
+---
+import { formatDate, readingTime } from '../lib/utils';
+
+export interface Props {
+  slug: string;
+  title: string;
+  description: string;
+  pubDate: Date;
+  tags: string[];
+  body?: string;
+  featured?: boolean;
+}
+
+const { slug, title, description, pubDate, tags, body, featured = false } = Astro.props;
+---
+
+<article
+  class:list={[
+    'card card-hover p-6 flex flex-col',
+    featured && 'sm:col-span-2 bg-surface-raised',
+  ]}
+  data-title={title.toLowerCase()}
+  data-description={description.toLowerCase()}
+  data-tags={tags.join(',').toLowerCase()}
+>
+  {featured && <span class="log-eyebrow mb-3">latest.post</span>}
+  <a href={`/blog/${slug}/`} class="group">
+    <h3 class="font-mono text-lg text-ink group-hover:text-mint transition-colors">{title}</h3>
+  </a>
+  <p class="text-sm text-ink-muted mt-2 leading-6 flex-1">{description}</p>
+
+  <div class="flex flex-wrap gap-2 mt-4">
+    {tags.map((tag) => (
+      <a href={`/blog?tag=${tag}`} class="pill hover:text-mint hover:border-mint/40">
+        #{tag}
+      </a>
+    ))}
+  </div>
+
+  <div class="flex items-center gap-3 mt-4 font-mono text-xs text-ink-faint">
+    <time datetime={pubDate.toISOString()}>{formatDate(pubDate)}</time>
+    <span>·</span>
+    <span>{readingTime(body)}</span>
+  </div>
+</article>

@@ -1,0 +1,80 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+
+const navItems = [
+  { label: 'Home', href: '/' },
+  { label: 'About', href: '/about' },
+  { label: 'Experience', href: '/experience' },
+  { label: 'Projects', href: '/projects' },
+  { label: 'Blog', href: '/blog' },
+  { label: 'Contact', href: '/#contact' },
+];
+
+const currentPath = new URL(Astro.request.url).pathname;
+---
+
+<header class="sticky top-0 z-40 border-b border-border/60 bg-bg/80 backdrop-blur-md">
+  <div class="mx-auto max-w-content px-5 sm:px-8 h-16 flex items-center justify-between">
+    <a href="/" class="font-mono text-sm text-ink flex items-center gap-2 group">
+      <span class="text-mint group-hover:text-mint-bright transition-colors">~/</span>
+      <span>harsh-yadav</span>
+    </a>
+
+    <nav class="hidden md:flex items-center gap-1 font-mono text-sm">
+      {
+        navItems.map((item) => {
+          const active = currentPath === item.href;
+          return (
+            <a
+              href={item.href}
+              class:list={[
+                'px-3 py-2 rounded-md transition-colors',
+                active ? 'text-mint' : 'text-ink-muted hover:text-ink',
+              ]}
+            >
+              {item.label}
+            </a>
+          );
+        })
+      }
+    </nav>
+
+    <div class="flex items-center gap-3">
+      <ThemeToggle />
+      <button
+        id="nav-toggle"
+        class="md:hidden p-2 -mr-2 text-ink-muted hover:text-ink"
+        aria-label="Toggle navigation menu"
+        aria-expanded="false"
+        aria-controls="mobile-nav"
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M2.5 5h15M2.5 10h15M2.5 15h15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <nav
+    id="mobile-nav"
+    class="md:hidden hidden border-t border-border/60 bg-bg px-5 py-3 font-mono text-sm"
+  >
+    {
+      navItems.map((item) => (
+        <a href={item.href} class="block py-2.5 text-ink-muted hover:text-mint">
+          {item.label}
+        </a>
+      ))
+    }
+  </nav>
+</header>
+
+<script is:inline>
+  const toggle = document.getElementById('nav-toggle');
+  const menu = document.getElementById('mobile-nav');
+  toggle?.addEventListener('click', () => {
+    const isHidden = menu?.classList.contains('hidden');
+    menu?.classList.toggle('hidden');
+    toggle.setAttribute('aria-expanded', String(!!isHidden));
+  });
+</script>

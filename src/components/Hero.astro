@@ -1,0 +1,54 @@
+---
+import { profile } from '../data/profile';
+---
+
+<section class="mx-auto max-w-content px-5 sm:px-8 pt-16 sm:pt-24 pb-16 grid md:grid-cols-[1.2fr_1fr] gap-10 items-start">
+  <div class="animate-fadeUp">
+    <p class="log-eyebrow mb-5">system.identity</p>
+    <h1 class="font-mono text-4xl sm:text-5xl font-semibold tracking-tight text-ink">
+      {profile.name}
+    </h1>
+    <p class="mt-3 text-lg sm:text-xl text-ink-muted">
+      {profile.role} <span class="text-ink-faint">/</span> {profile.roleSecondary}
+    </p>
+    <p class="mt-5 max-w-xl text-ink-muted leading-7">
+      {profile.tagline}
+    </p>
+
+    <div class="mt-5 flex flex-wrap gap-2">
+      {profile.focusStack.map((item) => <span class="pill">{item}</span>)}
+    </div>
+
+    <div class="mt-8 flex flex-wrap gap-3">
+      <a href="/projects" class="btn-primary">View Projects</a>
+      <a href="/blog" class="btn-secondary">Read My Blog</a>
+    </div>
+
+    <div class="mt-8 flex items-center gap-4 font-mono text-sm">
+      <a href={profile.social.github} target="_blank" rel="noopener noreferrer" class="text-ink-muted hover:text-mint transition-colors">
+        GitHub ↗
+      </a>
+      <a href={profile.social.linkedin} target="_blank" rel="noopener noreferrer" class="text-ink-muted hover:text-mint transition-colors">
+        LinkedIn ↗
+      </a>
+    </div>
+  </div>
+
+  <div class="animate-fadeUp" style="animation-delay: 100ms;">
+    <div class="card overflow-hidden">
+      <div class="flex items-center gap-1.5 px-4 py-2.5 border-b border-border bg-surface-raised">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#e05252]/70"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-[#e8c14b]/70"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-mint/70"></span>
+        <span class="ml-3 font-mono text-xs text-ink-faint">session</span>
+      </div>
+      <pre class="font-mono text-sm p-5 leading-6 overflow-x-auto"><code
+        ><span class="text-mint">$</span> whoami
+
+<span class="text-ink">{profile.terminal.user}</span><span class="text-ink-faint">@</span><span class="text-ink">{profile.terminal.host}</span>
+{profile.terminal.lines.map((line) => `\n${line.key}: ${line.value}`).join('')}
+<span class="text-mint animate-blink">▍</span></code
+      ></pre>
+    </div>
+  </div>
+</section>

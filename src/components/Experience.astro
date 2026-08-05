@@ -1,0 +1,32 @@
+---
+import { experience } from '../data/experience';
+export interface Props {
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+const entries = compact ? experience.slice(0, 2) : experience;
+---
+
+<div class="space-y-6">
+  {
+    entries.map((job) => (
+      <article class="card card-hover p-6 relative">
+        <div class="flex flex-wrap items-baseline justify-between gap-2 mb-2">
+          <h3 class="font-mono text-lg text-ink">{job.company}</h3>
+          <span class="font-mono text-xs text-ink-faint">{job.date}</span>
+        </div>
+        <p class="text-mint text-sm font-medium">{job.role}</p>
+        <p class="font-mono text-xs text-ink-faint mt-1">{job.location}</p>
+        <p class="text-ink-muted text-sm mt-4 leading-6">{job.description}</p>
+        <ul class="mt-4 space-y-1.5">
+          {job.responsibilities.map((r) => (
+            <li class="text-sm text-ink-muted flex gap-2">
+              <span class="text-mint mt-0.5">›</span>
+              <span>{r}</span>
+            </li>
+          ))}
+        </ul>
+      </article>
+    ))
+  }
+</div>

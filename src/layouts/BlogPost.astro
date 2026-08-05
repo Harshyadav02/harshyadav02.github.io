@@ -1,0 +1,68 @@
+---
+import Layout from './Layout.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+import { formatDate, readingTime } from '../lib/utils';
+
+export interface Props {
+  title: string;
+  description: string;
+  pubDate: Date;
+  updatedDate?: Date;
+  tags: string[];
+  body?: string;
+  headings: { depth: number; slug: string; text: string }[];
+}
+
+const { title, description, pubDate, updatedDate, tags, body, headings } = Astro.props;
+---
+
+<Layout title={title} description={description} article>
+  <article class="mx-auto max-w-content px-5 sm:px-8 py-14">
+    <div class="max-w-prose mx-auto mb-10">
+      <a href="/blog" class="font-mono text-xs text-ink-faint hover:text-mint">← back to blog</a>
+      <p class="log-eyebrow mt-6 mb-4">post.render</p>
+      <h1 class="font-mono text-3xl sm:text-4xl text-ink leading-tight">{title}</h1>
+      <div class="flex flex-wrap items-center gap-3 mt-5 font-mono text-xs text-ink-faint">
+        <time datetime={pubDate.toISOString()}>{formatDate(pubDate)}</time>
+        <span>·</span>
+        <span>{readingTime(body)}</span>
+        {updatedDate && (
+          <>
+            <span>·</span>
+            <span>updated {formatDate(updatedDate)}</span>
+          </>
+        )}
+      </div>
+      <div class="flex flex-wrap gap-2 mt-4">
+        {tags.map((tag) => (
+          <a href={`/blog?tag=${tag}`} class="pill hover:text-mint hover:border-mint/40">#{tag}</a>
+        ))}
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-[1fr_200px] gap-10 max-w-none">
+      <div class="prose-article relative">
+        <slot />
+      </div>
+      <TableOfContents headings={headings} />
+    </div>
+  </article>
+</Layout>
+
+<script is:inline>
+  // Add a copy button to every code block rendered by Shiki.
+  document.querySelectorAll('.prose-article pre').forEach((pre) => {
+    pre.classList.add('relative', 'group');
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn group-hover:opacity-100';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', async () => {
+      const code = pre.querySelector('code')?.textContent ?? '';
+      await navigator.clipboard.writeText(code);
+      btn.textContent = 'Copied';
+      setTimeout(() => (btn.textContent = 'Copy'), 1500);
+    });
+    pre.appendChild(btn);
+  });
+</script>
