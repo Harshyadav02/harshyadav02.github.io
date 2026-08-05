@@ -20,6 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: withastro/action@v3
+        with:
+          node-version: 22
         # Builds the Astro site and uploads the Pages artifact automatically.
         # If you use a custom domain, add it to public/CNAME instead of
         # changing anything here.
