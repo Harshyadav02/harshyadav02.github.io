@@ -30,11 +30,6 @@ export const profile = {
   about: {
     intro:
       "I work on cloud-native infrastructure — Kubernetes platforms, reliability, observability, and automation — as an Associate Site Reliability Engineer at CloudRaft, a cloud-native and AI infrastructure consulting company.",
-    body: [
-      'Most of my work happens on client Kubernetes platforms running on AWS: building and hardening EKS clusters, writing and maintaining Helm charts, and keeping delivery pipelines boring in the good sense — predictable, reversible, and observable.',
-      "A good chunk of that is reliability work: tracing an incident back to a misconfigured autoscaling policy, a saturated node pool, or a rollover policy that never fired, then fixing the root cause instead of just the symptom. I've spent time on image pull performance with lazy-loading snapshotters, on decoupling secrets management from application charts so upgrades stop fighting each other, and on packaging software for delivery through tools like Replicated instead of ad-hoc Helm installs.",
-      "I care about infrastructure that's understandable months later — clear runbooks, charts that don't hide what they deploy, and dashboards that tell you what's actually wrong. Outside client work, I keep up with the Kubernetes and cloud-native community and write here about the parts of the ecosystem I've had to actually debug, not just read about.",
-    ],
     stack: [
       'Kubernetes',
       'AWS',
