@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Experience from '../components/Experience.astro';
 import { profile } from '../data/profile';
 ---
 
@@ -16,6 +17,12 @@ import { profile } from '../data/profile';
       <div class="flex flex-wrap gap-2">
         {profile.about.stack.map((item) => <span class="pill">{item}</span>)}
       </div>
+    </div>
+
+    <div class="mt-14">
+      <p class="log-eyebrow mb-4">history.log</p>
+      <h2 class="font-mono text-2xl text-ink mb-6">Experience</h2>
+      <Experience />
     </div>
   </section>
 </Layout>
