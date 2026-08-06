@@ -1,6 +1,5 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: 'class',
   content: ['./src/**/*.{astro,html,js,jsx,md,mdx,ts,tsx}'],
   theme: {
     extend: {
@@ -30,11 +29,6 @@ export default {
         amber: {
           DEFAULT: '#e8a54b',
           dim: '#a97633',
-        },
-        // Light mode surface tokens
-        paper: {
-          DEFAULT: '#f7f7f4',
-          raised: '#ffffff',
         },
       },
       fontFamily: {
