@@ -9,11 +9,11 @@ export const profile = {
   focusStack: ['Kubernetes', 'AWS', 'Terraform', 'Observability', 'Automation'],
 
   location: 'India', // TODO: set the level of detail you're comfortable showing publicly (city, region, or remove entirely)
-  email: 'your.email@example.com', // TODO: replace with real contact email
+  email: 'harshyadav5736@gmail.com',
 
   social: {
-    github: 'https://github.com/your-github-handle', // TODO: replace
-    linkedin: 'https://linkedin.com/in/your-linkedin-handle', // TODO: replace
+    github: 'https://github.com/harshyadav02',
+    linkedin: 'https://www.linkedin.com/in/harshyadav02',
   },
 
   terminal: {
