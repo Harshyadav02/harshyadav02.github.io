@@ -27,10 +27,6 @@
     @apply bg-bg text-ink font-sans antialiased;
   }
 
-  html.light body {
-    @apply bg-paper text-[#1b2126];
-  }
-
   ::selection {
     @apply bg-mint/30 text-ink;
   }
@@ -94,9 +90,6 @@
   .prose-article p {
     @apply text-ink-muted leading-7 mb-5;
   }
-  html.light .prose-article p {
-    @apply text-[#3a4450];
-  }
   .prose-article a {
     @apply text-mint hover:text-mint-bright;
   }
@@ -124,7 +117,7 @@
     @apply font-mono text-[0.85em] text-mint bg-surface-raised px-1.5 py-0.5 rounded;
   }
   .prose-article pre {
-    @apply rounded-lg border border-border !bg-[#0d1013] p-4 overflow-x-auto my-6 text-sm;
+    @apply rounded-lg border border-border !bg-surface p-4 overflow-x-auto my-6 text-sm;
   }
   .prose-article pre code {
     @apply bg-transparent text-inherit p-0;

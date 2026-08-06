@@ -1,6 +1,4 @@
 ---
-import ThemeToggle from './ThemeToggle.astro';
-
 const navItems = [
   { label: 'Home', href: '/' },
   { label: 'About', href: '/about' },
@@ -40,7 +38,6 @@ const currentPath = new URL(Astro.request.url).pathname;
     </nav>
 
     <div class="flex items-center gap-3">
-      <ThemeToggle />
       <button
         id="nav-toggle"
         class="md:hidden p-2 -mr-2 text-ink-muted hover:text-ink"
