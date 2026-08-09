@@ -27,5 +27,18 @@ export const experience: ExperienceEntry[] = [
       'Write customer-facing technical documentation for infrastructure onboarding',
     ],
   },
+  {
+    company: 'CloudRaft',
+    role: 'DevOps Intern',
+    location: 'Remote',
+    date: 'TODO — start date', // TODO: fill in
+    description:
+      'Interned with the platform team at CloudRaft, supporting cloud-native infrastructure and delivery workflows before converting to a full-time role.',
+    responsibilities: [
+      'Provisioned and maintained AWS infrastructure with Terraform, including containerized workloads and networking',
+      'Assisted with CI/CD pipelines for building and deploying container images',
+      'Gained hands-on experience with Kubernetes fundamentals, Helm, and observability tooling',
+    ],
+  },
   // Add earlier roles here in the same shape, most recent first.
 ];
