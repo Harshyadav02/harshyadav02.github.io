@@ -2,7 +2,7 @@
 import { profile } from '../data/profile';
 ---
 
-<section id="contact" class="mx-auto max-w-content px-5 sm:px-8 pt-16 sm:pt-24 pb-16">
+<section id="contact" class="mx-auto max-w-content px-5 sm:px-8 pt-16 sm:pt-24 pb-16 grid md:grid-cols-[1.2fr_1fr] gap-10 items-center">
   <div class="animate-fadeUp">
     <p class="log-eyebrow mb-5">system.identity</p>
     <h1 class="font-mono text-4xl sm:text-5xl font-semibold tracking-tight text-ink">
@@ -37,29 +37,13 @@ import { profile } from '../data/profile';
     </div>
   </div>
 
-  <!--
-  <div class="animate-fadeUp" style="animation-delay: 100ms;">
-    <div class="card overflow-hidden">
-      <div class="flex items-center gap-1.5 px-4 py-2.5 border-b border-border bg-surface-raised">
-        <span class="w-2.5 h-2.5 rounded-full bg-[#e05252]/70"></span>
-        <span class="w-2.5 h-2.5 rounded-full bg-[#e8c14b]/70"></span>
-        <span class="w-2.5 h-2.5 rounded-full bg-mint/70"></span>
-        <span class="ml-3 font-mono text-xs text-ink-faint">session</span>
-      </div>
-      <pre class="font-mono text-sm p-5 leading-6 overflow-x-auto"><code
-        ><span class="text-mint">$</span> whoami
-
-<span class="text-ink">{profile.terminal.user}</span><span class="text-ink-faint">@</span><span class="text-ink">{profile.terminal.host}</span>
-{profile.terminal.lines.map((line) => `\n${line.key}: ${line.value}`).join('')}
-<span class="text-ink-faint">───</span>
-
-<a href={`mailto:${profile.email}`} class="block text-mint hover:text-mint-bright break-all">email&nbsp;→&nbsp;{profile.email}</a>
-<a href={profile.social.github} target="_blank" rel="noopener noreferrer" class="block text-ink hover:text-mint">github&nbsp;→&nbsp;{profile.social.githubUser}</a>
-<a href={profile.social.linkedin} target="_blank" rel="noopener noreferrer" class="block text-ink hover:text-mint">linkedin&nbsp;→&nbsp;{profile.social.linkedinUser}</a>
-<span class="text-ink-muted">location&nbsp;→&nbsp;{profile.location}</span>
-<span class="text-mint animate-blink">▍</span></code
-      ></pre>
+  <div class="flex justify-center md:justify-end animate-fadeUp" style="animation-delay: 100ms;">
+    <div class="rounded-full p-1.5 bg-gradient-to-br from-mint/60 via-border to-surface-raised">
+      <img
+        src="/favicon.png"
+        alt={`${profile.name} portrait`}
+        class="w-56 h-56 sm:w-64 sm:h-64 rounded-full object-cover bg-surface"
+      />
     </div>
   </div>
-  -->
 </section>
