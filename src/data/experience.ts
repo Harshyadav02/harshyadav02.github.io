@@ -21,7 +21,7 @@ export const experience: ExperienceEntry[] = [
     roles: [
       {
         title: 'Associate Site Reliability Engineer',
-        date: 'TODO — start date', // TODO: fill in
+        date: 'Jan 2026 — Present',
         description:
           'CloudRaft is a cloud-native and AI infrastructure consulting company. I work as a contractor across client engagements, focused on Kubernetes platform infrastructure on AWS.',
         responsibilities: [
@@ -35,7 +35,7 @@ export const experience: ExperienceEntry[] = [
       },
       {
         title: 'DevOps Intern',
-        date: 'TODO — start date', // TODO: fill in
+        date: 'Jul 2025 — Dec 2025',
         description:
           'Interned with the platform team at CloudRaft, supporting cloud-native infrastructure and delivery workflows before converting to a full-time role.',
         responsibilities: [
