@@ -12,7 +12,15 @@ const entries = compact ? experience.slice(0, 1) : experience;
     entries.map((company) => (
       <article class="card card-hover p-6 relative">
         <div class="flex flex-wrap items-baseline justify-between gap-2 mb-1">
-          <h3 class="font-mono text-lg text-ink">{company.company}</h3>
+          <h3 class="font-mono text-lg text-ink">
+            {company.companyUrl ? (
+              <a href={company.companyUrl} target="_blank" rel="noopener noreferrer" class="hover:text-mint transition-colors">
+                {company.company} ↗
+              </a>
+            ) : (
+              company.company
+            )}
+          </h3>
           <span class="font-mono text-xs text-ink-faint">{company.location}</span>
         </div>
 
