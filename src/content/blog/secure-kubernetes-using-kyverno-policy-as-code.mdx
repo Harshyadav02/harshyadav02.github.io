@@ -1,0 +1,193 @@
+---
+title: 'Secure Kubernetes using Kyverno Policy-as-code'
+pubDate: '2025-08-18'
+description: 'Secure your Kubernetes environment with Kyverno. Understand how to protect namespaces, manage resources, and enforce consistent policies as code.'
+tags: ['Kubernetes', 'Security']
+author: 'Harsh Yadav'
+---
+
+Have you ever thought what would happen if your Kubernetes work disappeared with one wrong command? Imagine this scenario, a team is troubleshooting their Kubernetes cluster when someone accidentally deletes the entire development namespace, loses all our pods, deployments, and resources tied to that namespace with just one command. All the hard work goes up in smoke in seconds. No warning, nothing, because of human error.
+
+This kind of thing wouldn't just be an accident, it would be a wake-up call for any team. What they'd do next is make sure the same mistake never happens again. An experience like this would force them to look for better Kubernetes security.
+
+In this blog post, we will discuss how we protected our resources and namespace.
+
+## Introduction to Kubernetes Policy
+
+Kubernetes policies are a set of rules that set what is allowed and what is not allowed when working with resources like pods, deployments, or namespaces within a cluster.
+
+### Common Types of Kubernetes Polices
+
+- **Network Policies** allow you to specify rules for traffic flow within your cluster, and also between Pods and the outside world.
+- **Resource Quotas** allow you to limit the resource consumption used by a namespace or a group.
+
+While these policies are powerful, but are static and limited, i.e., they can't apply custom rules like every pod must have a specific label, or rules like a namespace cannot be deleted. These policies don’t support Mutation capabilities. To extend the limitation, we have a dynamic policy engine.
+
+### Dynamic Policy Engine
+
+The dynamic policy engine acts as a checkpoint for our Kubernetes cluster, it sits between the user and the Kubernetes API. It intercepts the incoming request to the Kubernetes API at run time. They validate the request based on the custom policy and then decide whether to allow or deny the request.
+
+This engine works through admission webhooks and can validate configuration, mutate objects, and much more. Below are some real-life examples where a dynamic policy helps.
+
+- Pod with No Resource limit, dynamic policy engines can inject default limits automatically.
+- Dynamic policy engines can add mandatory labels to a resource.
+- It blocks the deletion of the important resource.
+- It denies images from untrusted registries and many more.
+
+## Kubernetes Policy Engines
+
+Kubernetes supports policy engines. Here are a few of them:
+
+- **Kyverno** is a Kubernetes-native policy engine that allows you to write policies using simple **YAML**. It supports validation, mutation, and generation of Kubernetes resources.
+- **Open Policy Agent** is another policy engine, and can be integrated with Kubernetes via Gatekeeper. Its policies are written in the **Rego** language. It is highly powerful and flexible.
+- **JsPolicy** is an open-source Kubernetes policy engine that allows you to write policies using **JavaScript**. It runs as a validating/mutating admission webhook, similar to Kyverno and OPA.
+
+In this blog post, we will be covering **Kyverno**.
+
+## What is Kyverno
+
+Kyverno is a Kubernetes-native policy engine that allows us to write policies using simple YAML. It supports validation, mutation, and generation of Kubernetes resources, and integrates seamlessly with GitOps workflows.
+
+### Kyverno Architecture
+
+Kyverno operates as a **dynamic admission controller** in our Kubernetes cluster. It intercepts every request made to the Kubernetes API server to create, update, or delete resources. Based on defined policies, Kyverno decides whether to allow, block, mutate (modify), or generate resources.
+
+Architecture Components
+
+**Admission Webhook Server** receives incoming requests from the API Server and routes the request to the Kyverno engine for policy evaluation.
+
+**Kyverno engine** processes the request based on policy, which can
+
+- **Validate:** Apply rules before resources are accepted. Example: Ensure pods run as non-root users; reject if they don't does not run as non-root users.
+- **Mutate:** Automatically add or modify resources. Example: If a pod does not have specific labels, automatically add them.
+- **Verify Images:** Validate container image signatures to ensure images come from trusted sources.
+
+**Background Controller** Handles generate policies and cleanup tasks, it runs independently after resources are created and manages policies for existing resources.
+
+**WebHook Controller** manages ValidatingAdmissionWebhook and MutatingAdmissionWebhook configurations and ensures Kyverno intercepts relevant api calls.
+
+**Report Controller** helps in auditing and reporting.
+
+![Flowchart of Kyverno](https://res.cloudinary.com/dfee67kdq/image/upload/kubernetes/Screenshot_From_2025-08-18_13-41-38_krlkza.webp)
+
+## Kyverno Polices
+
+Kyvero supports several types of polices that enable protection for Kubernetes resources. Below are some policies:
+
+- **ClusterPolicy:** It is applied clusterwide, which allows mutation, validation, generation of resources, and image verification.
+- **Cleanup Policy:** Kyverno can clean up resources by defining these polices. Cleanup policies come in both cluster-scoped and Namespaced-scoped.
+- **ValidatingPolicy:** Introduced in Kyverno v1.14, these policies validate Kubernetes resources.
+- **ImageValidatingPolicy**: Also introduced in v1.14, this policy type focuses specifically on validating container images and associated metadata.
+
+## Setting up Kyverno using Helm
+
+### Prerequisites
+
+- Helm
+- Kind Cluster/ EKS/ Minikube
+- Kubectl
+
+### Kyverno Installation using Helm
+
+```bash
+helm repo add kyverno https://kyverno.github.io/kyverno/
+helm repo update
+```
+
+#### Install Kyverno in a highly available configuration
+
+```bash
+helm install kyverno kyverno/kyverno -n kyverno --create-namespace \
+--set admissionController.replicas=3 \
+--set backgroundController.replicas=2 \
+--set cleanupController.replicas=2 \
+--set reportsController.replicas=2
+
+```
+
+## Setting Up Policies
+
+Here are a few lists of polices I would cover. Create a YML file
+
+```yaml
+- name: protect-ns
+      match:
+        resources:
+          kinds:
+            - Namespace
+          names:
+            - dev
+      validate:
+        message: "Deletion of Namespace is not allowed"
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.operation }}"
+                operator: Equals
+                value: DELETE
+
+    - name: protect-pvc
+      match:
+        resources:
+          kinds:
+            - PersistentVolumeClaim
+          names:
+            - nginx-pvc
+      validate:
+        message: "Deletion of PVC is not allowed"
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.operation }}"
+                operator: Equals
+                value: DELETE
+
+
+    - name: add-team-label
+      match:
+        resources:
+          kinds:
+            - Pod
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              team: "dev"
+              environment: "development"
+
+```
+
+## Results after Kyverno Implementation
+
+Below are a few results after applying the dynamic policy engine.
+
+![Deleting dev namespace](https://res.cloudinary.com/dfee67kdq/image/upload/kubernetes/dev-ns_f7su4t.webp)
+![Deleting PVC](https://res.cloudinary.com/dfee67kdq/image/upload/kubernetes/pvc_sdfzmv.webp)
+![Added labels to the newly created pod](https://res.cloudinary.com/dfee67kdq/image/upload/kubernetes/label_jbcf9o.webp)
+
+**Note:** The Kyverno policy protects all the resources that are mentioned in the YAML file, **except** the namespaces and other resources defined in the Kyverno config file.
+
+![The Kyverno config file, which excludes the resources](https://res.cloudinary.com/dfee67kdq/image/upload/kubernetes/exclude_qvd7md.webp)
+
+## Advantages and Disadvantages of Kyverno
+
+Policies with Kyverno comes with their advantages and disadvantages.
+
+**Advantages**
+
+- Kyverno policies are written in YAML, just like regular Kubernetes resources, making it familiar and easy for most Kubernetes users to read and write.
+- Policies can be updated without downtime, and Kyverno applies changes dynamically as the cluster runs.
+- Kyverno can be integrated seamlessly with GitOps workflows.
+
+**Disadvantages**
+
+- Kyverno can't be used for general-purpose policy tasks outside Kubernetes it is built only for Kubernetes environments.
+- OPA/Gatekeeper is more mature when compared with Kyverno in terms of writing complex policies because Rego supports rich data structures and advanced logic, whereas Kyverno’s YAML-based approach offers simpler, more limited data manipulation.
+
+## Conclusion
+
+Using Kyverno helps make any Kubernetes cluster safer and easier to manage. As we explored, even a small mistake like accidentally deleting an entire namespace can lead to big problems in any team’s environment. Kyverno helps prevent accidents like these by letting teams define clear rules, written in simple, easy-to-read YAML files, controlling what actions are allowed or blocked in the cluster.
+
+Kyverno fits naturally into the way Kubernetes works. It’s user-friendly because its policies look just like the Kubernetes resources we are already familiar with. There’s no need to learn a special policy language. Policies can be updated at any time, without downtime, and Kyverno works seamlessly with GitOps workflows, making it easy to track and manage your policies alongside your application code.
+
+By setting up the right policies with Kyverno, teams can avoid unexpected accidents, increase consistency, and strengthen their [Kubernetes security](/kubernetes-consulting).
