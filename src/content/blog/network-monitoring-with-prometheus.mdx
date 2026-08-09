@@ -1,0 +1,189 @@
+---
+title: 'Network monitoring with Prometheus'
+pubDate: '2025-07-16'
+description: 'Explore hands-on strategies to monitor network devices and traffic using Prometheus. Learn how to integrate SNMP exporters, collect real-time metrics like outgoing traffic, incoming traffic, device availability etc, and visualize trends using Grafana.'
+tags: ['Prometheus']
+author: 'Harsh Yadav'
+---
+
+## Introduction
+
+Today’s networks carry everything from business emails to video calls and cloud applications. Even a short outage can disrupt work, cause financial losses, or open the door to security threats. According to a [recent survey](https://www.centerprise.co.uk/news/network-downtime-the-real-costs) by Gartner, the average cost of one minute of network downtime for large companies is nearly $5,600. Network monitoring helps spot problems before they affect users, keeps systems running smoothly, and ensures that critical data flows without interruption. By tracking device health, traffic patterns, and unusual activity, network monitoring makes it possible to fix issues quickly and keep networks secure and reliable.
+
+One of the most important protocols that enables network monitoring effectively and is an industry standard is SNMP (Simple Network Management Protocol).
+
+## About SNMP
+
+SNMP is a protocol used to monitor devices like routers, switches, servers, and more. It helps us understand what’s happening on our devices by exposing useful information, such as uptime, the number of incoming traffic, internet speed, etc.
+
+### SNMP Architecture
+
+SNMP architecture is based on a client-server model. It has three main components:
+
+- **SNMP Manager** is usually a monitoring system, like Prometheus or any other, that sends requests to the device to collect data
+- **SNMP Agent** runs on every network device. It stores data about the device’s performance and sends a response to the manager’s request
+- **MIB (Management Information Base)** is like a dictionary that helps the manager understand what each piece of information (OIDs) means.
+
+This information is transferred in the format of unique numbers, which are called OIDs (Object Identifiers).
+
+OIDs are unique addresses that represent a piece of data. These are defined in a file called MIB (Management Information Base), which tells us what each OID means. For example, 1.3.6.1.2.1.1.3 is an OID that represents `sysUpTime`, an object defined in the MIB.
+
+### SNMP Versions
+
+SNMP supports 3 versions i.e v1, v2, and v3:
+
+- **SNMP v1** had basic features and very simple security using a “community string” just like a password. This string was sent in plain text i.e., it was not encrypted.
+- **SNMP v2** version was just an enhancement of v1 by adding better error handling, and faster data collection using bulk requests but v2 also used the community string, which was not efficient.
+- **SNMP v3** version was more related to security. It introduced authentication to verify users and encryption to protect data. This means only authenticated users can access data from network devices, and the communication is encrypted.
+
+## Monitoring SNMP Devices
+
+There are many products that help in network monitoring, some of them are open source, and some of them are proprietary. They can consume the SNMP-generated metrics from the network devices and more. We are not covering all of them, but some of the most popular ones here.
+
+- **Prometheus** is a time-series monitoring system that scrapes and stores SNMP metrics via exporters like the SNMP Exporter.
+- **Zabbix** is an open-source monitoring tool that has built-in SNMP support. It provides auto-discovery of SNMP devices, and it also provides templating, dashboard, and alerting. Unlike Prometheus which follows pull-based architecture, Zabbix follows an active checking approach that delivers real-time data from network devices.
+- **PRTG** is a commercial monitoring tool by Paessler, it has a built-in sensor for SNMP devices, supports alerting, and a dashboard. It is agentless using SNMP and WMI for data collection.
+- **LibreNMS** automatically discovers your entire networking device. It supports SNMP discovery and polling and comes with built-in alerting and graphing.
+- **OpenTelemetry** is an observability toolkit that is used to collect metrics, traces, and logs. It doesn’t directly support SNMP, distributions like observIQ’s OpenTelemetry Collector come with built-in SNMP receivers. This allows direct SNMP polling of our network devices without the need for external exporters. And then it sends the data to observability platforms like Prometheus or Grafana.
+
+In this blog post, we will be covering how to use **Prometheus** and **Grafana** to do network monitoring.
+
+## Prometheus
+
+Prometheus is an open-source monitoring and alerting system used to collect metrics from systems and applications. It supports powerful queries using PromQL and can be easily integrated with Grafana for better visualization. If you want to read more about monitoring with Prometheus, then read our [other blog post](https://www.cloudraft.io/blog/monitoring-with-prometheus) for a more detailed deep dive.
+
+## SNMP Exporter Setup and Demo
+
+In this setup, we will simulate an SNMP-enabled networking device using [SNMPSIM](https://github.com/etingof/snmpsim), which will act as a virtual device and generate SNMP data. Prometheus is configured with an SNMP exporter to scrape the simulator periodically. This setup demonstrates how Prometheus can be used to monitor network devices.
+
+### To Download SNMP Exporter
+
+```bash
+wget https://github.com/Prometheus/snmp_exporter/releases/download/v0.24.1/snmp_exporter-0.24.1.linux-amd64.tar.gz
+tar -xvf snmp_exporter-0.24.1.linux-amd64.tar.gz
+cd snmp_exporter-0.24.1.linux-amd64
+```
+
+### To run the exporter, use
+
+```bash
+./snmp_exporter --config.file=snmp.yml
+```
+
+The exporter will run on the **9116** port.
+
+### To Install Prometheus
+
+```bash
+wget https://github.com/Prometheus/Prometheus/releases/download/v2.52.0/Prometheus-2.52.0.linux-amd64.tar.gz
+tar \-xvf Prometheus-2.52.0.linux-amd64.tar.gz
+cd Prometheus-2.52.0.linux-amd64
+```
+
+To monitor a networking device using SNMP, your device must have SNMP enabled, or if you do not have any SNMP-enabled device, you can use a simulator.
+
+### To install a SNMP-based simulator
+
+```bash
+sudo apt update
+sudo apt install \-y python3 python3-pip snmp
+python3 \-m venv env
+source env/bin/activate
+pip3 install snmpsim
+```
+
+### Start SNMP Simulator on `localhost:16100`
+
+```bash
+snmpsim-command-responder --agent-udpv4-endpoint=127.0.0.1:16100
+```
+
+### To check simulator is working, we can use `snmpwalk`
+
+```bash
+snmpwalk -v2c -c public 127.0.0.1:16100  → return list of OIDs means the simulator is working.
+```
+
+Once the Lab is setuped we are now ready to monitor our SNMP simulator using Prometheus.
+
+You register your SNMP Exporter so that Prometheus can communicate with the exporter
+Open the Prometheus.yml file present in **Prometheus-2.52.0.linux-amd64** and add a job inside the `scrape_configs` section.
+
+```yaml
+scrape_configs:
+  - job_name: 'snmp'
+    metrics_path: /snmp
+    params:
+      module: [if_mib] # This tells snmp_exporter which module to use
+    static_configs:
+      - targets:
+          - 127.0.0.1:16100 # This is the SNMP agent (SNMPSIM)
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target # sends target=127.0.0.1:16100 to SNMP exporter
+
+      - source_labels: [__param_target]
+        target_label: instance # It sets the label to "instance=127.0.0.1:16100"
+
+      - target_label: __address__
+        replacement: 127.0.0.1:9116 # SNMP Exporter
+```
+
+Save the file and run Prometheus `./promethus –config.file=Prometheus.yml`
+You will see Prometheus running on **port 9090**
+
+Once all setup is done and Prometheus is running, you will see the SNMP endpoint is up in the Prometheus target
+
+![Prometheus target endpoint](https://res.cloudinary.com/dfee67kdq/image/upload/Prometheus/target_mb1eld.webp)
+
+## How does it work?
+
+The SNMP exporter acts as a translator between Prometheus and Simulator devices because Prometheus cannot directly understand SNMP.
+
+The SNMP Exporter reads a snmp.yml file to know which OIDs to grab. For example, the if_mib section tells it to “walk” all interface OIDs (like names, speeds, and traffic counts).
+
+When Prometheus asks the exporter for data, it performs a series of SNMP `GET‑NEXT` requests and finds every interface metric.
+
+Once the exporter knows what to collect, it opens an SNMP session to your device based on the version we have chosen (v1, v2, v3), and polls the OIDs. After it gets a list of OID value pairs, the exporter matches each OID to a friendly name from `snmp.yml` for example `sysUpTime, ifInOctets, ifOutOctets`. These raw SNMP values are then converted into clear, labeled Prometheus metrics.
+
+The exporter runs an HTTP server on port **9116**. When Prometheus scrapes the `/SNMP endpoint`, the exporter packages up its latest metrics and serves them in Prometheus’s text format. In your Prometheus.yml, we set up a scrape job that points at the exporter and tells Prometheus to scrape the exporter’s HTTP port. This way, Prometheus simply pulls `/snmp.target=localhost:9116&module=if_mib.` At last, Prometheus receives the translated metrics (sysUpTime, ifSpeed, etc.) and stores them in its time-series database..
+
+The diagram below shows a high-level flow of getting metrics from the simulator.
+
+![SNMP metrics flow diagram](https://res.cloudinary.com/dfee67kdq/image/upload/Prometheus/High-Level_Flow_jnfiwa.webp)
+
+## Grafana Dashboard
+
+Once the SNMP exporter is integrated with Prometheus, metrics become available for visualization. Below is the Grafana dashboard that we have built to monitor the simulator.
+
+![Grafana dashboard for SNMP monitoring](https://res.cloudinary.com/dfee67kdq/image/upload/Prometheus/Grafana_jw5gvl.webp)
+
+The dashboard displays metrics like device System uptime, Physical Address, Scrap durations in seconds, etc. Through this visualization, we can monitor performance and detect anomalies in real time.
+
+## Advantages and Disadvantages of Using SNMP with Prometheus
+
+Network monitoring with Prometheus comes with its own set of advantages and disadvantages. Below are some of the key points to consider:
+
+### Advantages
+
+- We can apply `PromQL` to `SNMP metrics`, aggregating interface traffic across all routers, and alerting.
+- We do not need to install any extra agent on networking devices, the exporter polls them over SNMP, keeping device overhead to a minimum.
+- We can customize exactly which `OIDs` to collect per device type using modules in `snmp.yml`
+- We can add Grafana for better visualization of device metrics.
+
+### Disadvantages
+
+- Prometheus doesn’t have built-in support for SNMP, so we need an extra setup i.e, `SNMP` Exporter to monitor SNMP devices.
+- Prometheus, by default, supports a pull-based policy, and scrapes the data in intervals due to this, we cannot get real-time data, but by reducing the time interval, we can get nearly real-time data, but it increases system load.
+- Prometheus supports a push-based mechanism also, but again, it needs additional configuration for the Push Gateway.
+- Not all SNMP devices expose the same `OIDs`. This means you may need separate modules per vendor or model, which increases configuration work.
+
+## Conclusion
+
+Using Prometheus with an SNMP exporter can be a way to monitor your networking devices, like routers, switches, etc. The SNMP Exporter enables Prometheus to collect, label, and store SNMP metrics in a format that's easy to query using PromQL, trigger alerts, and visualize using tools like Grafana.
+
+However, this setup requires some initial setup, including the installation of the SNMP exporter and configuration of the snmp.yml file to match your device's OIDs. While the setup may take some effort, once configured, it becomes a flexible and scalable solution suitable for monitoring network environments.
+
+Prometheus has certain limitations since it stores data locally, which means it's not ideal for long-term storage or high availability when monitoring multiple SNMP devices across networks.
+
+To overcome these limitations, tools like [**Thanos**](https://www.cloudraft.io/thanos-support) and [**Grafana Mimir**](https://www.cloudraft.io/grafana-mimir-support) extend Prometheus by adding long-term, scalable storage and high availability. They are a better fit when you are monitoring a lot of SNMP devices to gain more reliability and a centralized setup.
