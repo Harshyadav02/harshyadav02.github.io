@@ -2,16 +2,13 @@
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
 import BlogCard from '../components/BlogCard.astro';
+import Projects from '../components/Projects.astro';
 import { profile } from '../data/profile';
 import { getCollection } from 'astro:content';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
   .slice(0, 3);
-
-const engagements = (await getCollection('projects')).sort(
-  (a, b) => a.data.order - b.data.order
-);
 ---
 
 <Layout title="Harsh Yadav">
@@ -25,24 +22,7 @@ const engagements = (await getCollection('projects')).sort(
       </div>
       <a href="/projects" class="font-mono text-sm text-mint hover:text-mint-bright">all engagements →</a>
     </div>
-
-    <div class="border-t border-border">
-      {
-        engagements.map((engagement, i) => (
-          <a
-            href={`/projects/${engagement.id}/`}
-            class="group flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-6 border-b border-border py-5"
-          >
-            <span class="font-mono text-xs text-ink-faint">0{i + 1}</span>
-            <span class="font-mono text-lg text-ink group-hover:text-mint transition-colors">
-              {engagement.data.title}
-            </span>
-            <span class="text-sm text-ink-muted leading-6 flex-1">{engagement.data.summary}</span>
-            <span class="font-mono text-xs text-mint mt-1 sm:mt-0">→</span>
-          </a>
-        ))
-      }
-    </div>
+    <Projects gridClass="sm:grid-cols-2 lg:grid-cols-3" />
   </section>
 
   <section class="mx-auto max-w-content px-5 sm:px-8 py-16 border-t border-border/60">

@@ -2,13 +2,14 @@
 import { getCollection } from 'astro:content';
 export interface Props {
   featuredOnly?: boolean;
+  gridClass?: string;
 }
-const { featuredOnly = false } = Astro.props;
+const { featuredOnly = false, gridClass = 'sm:grid-cols-2' } = Astro.props;
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
 const list = featuredOnly ? projects.filter((p) => p.data.featured) : projects;
 ---
 
-<div class="grid sm:grid-cols-2 gap-5">
+<div class={`grid gap-5 ${gridClass}`}>
   {
     list.map((project) => (
       <article class="card card-hover p-6 flex flex-col">
