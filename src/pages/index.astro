@@ -38,14 +38,38 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft))
   </section>
 
   <section id="contact" class="mx-auto max-w-content px-5 sm:px-8 py-20 border-t border-border/60">
-    <div class="card p-10 text-center">
-      <p class="log-eyebrow mb-4 justify-center">contact.init</p>
-      <h2 class="font-mono text-2xl sm:text-3xl text-ink">{profile.contact.heading}</h2>
-      <p class="text-ink-muted mt-2">{profile.contact.body}</p>
-      <div class="flex flex-wrap justify-center gap-3 mt-7 font-mono text-sm">
-        <a href={profile.social.github} target="_blank" rel="noopener noreferrer" class="btn-secondary">GitHub</a>
-        <a href={profile.social.linkedin} target="_blank" rel="noopener noreferrer" class="btn-secondary">LinkedIn</a>
-        <a href={`mailto:${profile.email}`} class="btn-primary">Email</a>
+    <p class="log-eyebrow mb-8">contact.init</p>
+    <div class="card overflow-hidden max-w-2xl">
+      <div class="flex items-center gap-1.5 px-4 py-2.5 border-b border-border bg-surface-raised">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#e05252]/70"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-[#e8c14b]/70"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-mint/70"></span>
+        <span class="ml-3 font-mono text-xs text-ink-faint">contact</span>
+      </div>
+      <div class="font-mono text-sm p-5 sm:p-7 leading-7">
+        <p class="text-ink-muted">{profile.contact.body}</p>
+
+        <div class="mt-4 space-y-1.5">
+          <p class="text-ink-faint">{profile.contact.heading}</p>
+          <div class="grid sm:grid-cols-[auto_1fr] sm:items-baseline gap-x-4">
+            <a href={`mailto:${profile.email}`} class="text-mint hover:text-mint-bright break-all">
+              <span class="text-ink-faint select-none">email&nbsp;→&nbsp;</span>{profile.email}
+            </a>
+            <a href={profile.social.github} target="_blank" rel="noopener noreferrer" class="text-ink hover:text-mint">
+              <span class="text-ink-faint select-none">github&nbsp;→&nbsp;</span>harshyadav02
+            </a>
+            <a href={profile.social.linkedin} target="_blank" rel="noopener noreferrer" class="text-ink hover:text-mint">
+              <span class="text-ink-faint select-none">linkedin&nbsp;→&nbsp;</span>harshyadav02
+            </a>
+            <span class="text-ink-muted">
+              <span class="text-ink-faint select-none">location&nbsp;→&nbsp;</span>{profile.location}
+            </span>
+          </div>
+        </div>
+
+        <p class="mt-6 text-mint">
+          <span class="text-mint">$</span> ./hire-me <span class="animate-blink">▍</span>
+        </p>
       </div>
     </div>
   </section>
