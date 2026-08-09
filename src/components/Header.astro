@@ -2,12 +2,19 @@
 const navItems = [
   { label: 'Home', href: '/' },
   { label: 'About', href: '/about' },
-  { label: 'Projects', href: '/projects' },
+  {
+    label: 'Work',
+    children: [
+      { label: 'Client Engagement', href: '/projects' },
+      { label: 'Personal Learnings', href: '/learnings' },
+    ],
+  },
   { label: 'Blog', href: '/blog' },
   { label: 'Contact', href: '/#contact' },
 ];
 
 const currentPath = new URL(Astro.request.url).pathname;
+const workActive = currentPath.startsWith('/projects') || currentPath.startsWith('/learnings');
 ---
 
 <header class="sticky top-0 z-40 border-b border-border/60 bg-bg/80 backdrop-blur-md">
@@ -17,9 +24,50 @@ const currentPath = new URL(Astro.request.url).pathname;
       <span>harsh-yadav</span>
     </a>
 
-    <nav class="hidden md:flex items-center gap-1 font-mono text-sm">
+    <nav class="hidden md:flex items-center gap-1 font-mono text-sm" aria-label="Main">
       {
         navItems.map((item) => {
+          if (item.children) {
+            return (
+              <div class="relative group">
+                <button
+                  type="button"
+                  aria-haspopup="true"
+                  class:list={[
+                    'flex items-center gap-1 px-3 py-2 rounded-md transition-colors cursor-pointer',
+                    workActive ? 'text-mint' : 'text-ink-muted hover:text-ink',
+                  ]}
+                >
+                  {item.label}
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    aria-hidden="true"
+                    class="transition-transform group-hover:rotate-180"
+                  >
+                    <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
+                <div class="absolute left-0 top-full pt-2 hidden group-hover:block group-focus-within:block">
+                  <div class="min-w-48 rounded-lg border border-border bg-surface-raised py-2 shadow-xl">
+                    {item.children.map((child) => (
+                      <a
+                        href={child.href}
+                        class:list={[
+                          'block px-4 py-2 text-ink-muted hover:text-mint hover:bg-bg/50 transition-colors',
+                          currentPath === child.href && 'text-mint',
+                        ]}
+                      >
+                        {child.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          }
           const active = currentPath === item.href;
           return (
             <a
@@ -54,13 +102,24 @@ const currentPath = new URL(Astro.request.url).pathname;
   <nav
     id="mobile-nav"
     class="md:hidden hidden border-t border-border/60 bg-bg px-5 py-3 font-mono text-sm"
+    aria-label="Mobile"
   >
     {
-      navItems.map((item) => (
-        <a href={item.href} class="block py-2.5 text-ink-muted hover:text-mint">
-          {item.label}
-        </a>
-      ))
+      navItems.map((item) => {
+        if (item.children) {
+          return (
+            <div class="mt-1">
+              <p class="px-2 pt-3 pb-1 text-[10px] uppercase tracking-widest text-ink-faint">{item.label}</p>
+              {item.children.map((child) => (
+                <a href={child.href} class="block px-4 py-2 text-ink-muted hover:text-mint">{child.label}</a>
+              ))}
+            </div>
+          );
+        }
+        return (
+          <a href={item.href} class="block py-2.5 text-ink-muted hover:text-mint">{item.label}</a>
+        );
+      })
     }
   </nav>
 </header>
