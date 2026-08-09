@@ -1,0 +1,43 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import TableOfContents from '../../components/TableOfContents.astro';
+
+export async function getStaticPaths() {
+  const projects = (await getCollection('projects')).sort(
+    (a, b) => a.data.order - b.data.order
+  );
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: { project },
+  }));
+}
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+}
+
+const { project } = Astro.props;
+const { Content, headings } = await render(project);
+---
+
+<Layout title={project.data.title} description={project.data.summary} article>
+  <article class="mx-auto max-w-content px-5 sm:px-8 py-14">
+    <div class="max-w-prose mx-auto mb-10">
+      <a href="/projects" class="font-mono text-xs text-ink-faint hover:text-mint">← back to projects</a>
+      <p class="log-eyebrow mt-6 mb-4">client.engagement</p>
+      <h1 class="font-mono text-3xl sm:text-4xl text-ink leading-tight">{project.data.title}</h1>
+      <p class="text-ink-muted mt-4 leading-7">{project.data.summary}</p>
+      <div class="flex flex-wrap gap-2 mt-5">
+        {project.data.tech.map((t) => <span class="pill">{t}</span>)}
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-[1fr_200px] gap-10 max-w-none">
+      <div class="prose-article relative">
+        <Content />
+      </div>
+      <TableOfContents headings={headings} />
+    </div>
+  </article>
+</Layout>

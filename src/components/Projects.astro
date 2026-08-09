@@ -1,23 +1,30 @@
 ---
-import { projects } from '../data/projects';
+import { getCollection } from 'astro:content';
 export interface Props {
   featuredOnly?: boolean;
+  gridClass?: string;
 }
-const { featuredOnly = false } = Astro.props;
-const list = featuredOnly ? projects.filter((p) => p.featured) : projects;
+const { featuredOnly = false, gridClass = 'sm:grid-cols-2' } = Astro.props;
+const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+const list = featuredOnly ? projects.filter((p) => p.data.featured) : projects;
 ---
 
-<div class="grid sm:grid-cols-2 gap-5">
+<div class={`grid gap-5 ${gridClass}`}>
   {
     list.map((project) => (
       <article class="card card-hover p-6 flex flex-col">
-        <h3 class="font-mono text-lg text-ink">{project.title}</h3>
-        <p class="text-sm text-ink-muted mt-2 leading-6 flex-1">{project.summary}</p>
+        <a href={`/projects/${project.id}/`} class="group">
+          <h3 class="font-mono text-lg text-ink group-hover:text-mint transition-colors">{project.data.title}</h3>
+        </a>
+        <p class="text-sm text-ink-muted mt-2 leading-6 flex-1">{project.data.summary}</p>
         <div class="flex flex-wrap gap-2 mt-4">
-          {project.tech.map((t) => (
+          {project.data.tech.map((t) => (
             <span class="pill">{t}</span>
           ))}
         </div>
+        <a href={`/projects/${project.id}/`} class="font-mono text-xs text-mint mt-4 hover:text-mint-bright transition-colors">
+          view engagement →
+        </a>
       </article>
     ))
   }

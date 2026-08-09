@@ -20,10 +20,10 @@ export const profile = {
     user: 'harsh',
     host: 'production',
     lines: [
-      { key: 'role', value: 'site-reliability-engineer' },
-      { key: 'focus', value: 'kubernetes' },
-      { key: 'cloud', value: 'aws' },
-      { key: 'status', value: 'operational' },
+      { key: 'role', value: 'associate-sre @ cloudraft' },
+      { key: 'experience', value: '1 year' },
+      { key: 'focus', value: 'cloudnative, aws, azure' },
+      { key: 'status', value: 'open-to-work' },
     ],
   },
 
