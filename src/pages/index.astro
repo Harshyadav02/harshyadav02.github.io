@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
 import BlogCard from '../components/BlogCard.astro';
+import Projects from '../components/Projects.astro';
 import { profile } from '../data/profile';
 import { getCollection } from 'astro:content';
 
@@ -12,6 +13,17 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft))
 
 <Layout title="Harsh Yadav">
   <Hero />
+
+  <section class="mx-auto max-w-content px-5 sm:px-8 py-16 border-t border-border/60">
+    <div class="flex items-baseline justify-between mb-8">
+      <div>
+        <p class="log-eyebrow mb-3">projects.current</p>
+        <h2 class="font-mono text-2xl text-ink">Client engagements</h2>
+      </div>
+      <a href="/projects" class="font-mono text-sm text-mint hover:text-mint-bright">all engagements →</a>
+    </div>
+    <Projects />
+  </section>
 
   <section class="mx-auto max-w-content px-5 sm:px-8 py-16 border-t border-border/60">
     <div class="flex items-baseline justify-between mb-8">
