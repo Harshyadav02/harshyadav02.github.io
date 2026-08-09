@@ -13,9 +13,7 @@ export const profile = {
 
   social: {
     github: 'https://github.com/harshyadav02',
-    githubUser: 'harshyadav02',
     linkedin: 'https://www.linkedin.com/in/harshyadav02',
-    linkedinUser: 'harshyadav02',
   },
 
   terminal: {
