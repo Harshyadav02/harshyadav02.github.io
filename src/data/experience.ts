@@ -8,6 +8,7 @@ export interface ExperienceRole {
 export interface ExperienceEntry {
   company: string;
   location: string;
+  clients?: string[];
   roles: ExperienceRole[];
 }
 
@@ -18,6 +19,7 @@ export const experience: ExperienceEntry[] = [
   {
     company: 'CloudRaft',
     location: 'Remote', // TODO: adjust if you want a specific location shown
+    clients: ['Hearzap', 'Enkrypt AI', 'SkySwitch'],
     roles: [
       {
         title: 'Associate Site Reliability Engineer',
