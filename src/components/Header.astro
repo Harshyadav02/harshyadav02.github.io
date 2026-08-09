@@ -2,19 +2,16 @@
 const navItems = [
   { label: 'Home', href: '/' },
   { label: 'About', href: '/about' },
+  { label: 'Blog', href: '/blog' },
   {
     label: 'Work',
-    children: [
-      { label: 'Client Engagement', href: '/projects' },
-      { label: 'Personal Learnings', href: '/learnings' },
-    ],
+    children: [{ label: 'Client Engagement', href: '/projects' }],
   },
-  { label: 'Blog', href: '/blog' },
   { label: 'Contact', href: '/#contact' },
 ];
 
 const currentPath = new URL(Astro.request.url).pathname;
-const workActive = currentPath.startsWith('/projects') || currentPath.startsWith('/learnings');
+const workActive = currentPath.startsWith('/projects');
 ---
 
 <header class="sticky top-0 z-40 border-b border-border/60 bg-bg/80 backdrop-blur-md">
