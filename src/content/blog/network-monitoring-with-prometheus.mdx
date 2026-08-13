@@ -185,5 +185,3 @@ Using Prometheus with an SNMP exporter can be a way to monitor your networking d
 However, this setup requires some initial setup, including the installation of the SNMP exporter and configuration of the snmp.yml file to match your device's OIDs. While the setup may take some effort, once configured, it becomes a flexible and scalable solution suitable for monitoring network environments.
 
 Prometheus has certain limitations since it stores data locally, which means it's not ideal for long-term storage or high availability when monitoring multiple SNMP devices across networks.
-
-To overcome these limitations, tools like [**Thanos**](https://www.cloudraft.io/thanos-support) and [**Grafana Mimir**](https://www.cloudraft.io/grafana-mimir-support) extend Prometheus by adding long-term, scalable storage and high availability. They are a better fit when you are monitoring a lot of SNMP devices to gain more reliability and a centralized setup.
