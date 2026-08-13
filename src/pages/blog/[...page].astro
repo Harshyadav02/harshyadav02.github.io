@@ -104,8 +104,8 @@ const allTags = [...new Set(allPosts.flatMap((p) => p.data.tags))].sort();
       ACTIVE_CLASSES.forEach((c) => btn.classList.toggle(c, isActive));
     }
 
-    let activeTag = new URLSearchParams(location.search).get('tag') || '';
-    tagButtons.forEach((btn) => setActive(btn, btn.dataset.tag === activeTag));
+    let activeTag = (new URLSearchParams(location.search).get('tag') || '').toLowerCase();
+    tagButtons.forEach((btn) => setActive(btn, (btn.dataset.tag || '').toLowerCase() === activeTag));
 
     function applyFilters() {
       const q = (searchInput?.value || '').toLowerCase().trim();
@@ -126,8 +126,8 @@ const allTags = [...new Set(allPosts.flatMap((p) => p.data.tags))].sort();
     searchInput?.addEventListener('input', applyFilters);
     tagButtons.forEach((btn) => {
       btn.addEventListener('click', () => {
-        activeTag = btn.dataset.tag || '';
-        tagButtons.forEach((b) => setActive(b, b === btn));
+        activeTag = (btn.dataset.tag || '').toLowerCase();
+        tagButtons.forEach((b) => setActive(b, (b.dataset.tag || '').toLowerCase() === activeTag));
         applyFilters();
       });
     });
