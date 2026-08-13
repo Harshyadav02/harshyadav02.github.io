@@ -54,6 +54,15 @@ export default {
           '0%, 49%': { opacity: '1' },
           '50%, 100%': { opacity: '0' },
         },
+        blinkSettle: {
+          '0%, 12.4%': { opacity: '1' },
+          '12.5%, 24.9%': { opacity: '0' },
+          '25%, 37.4%': { opacity: '1' },
+          '37.5%, 49.9%': { opacity: '0' },
+          '50%, 62.4%': { opacity: '1' },
+          '62.5%, 74.9%': { opacity: '0' },
+          '75%, 100%': { opacity: '1' },
+        },
         fadeUp: {
           '0%': { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
@@ -61,6 +70,7 @@ export default {
       },
       animation: {
         blink: 'blink 1s step-end infinite',
+        'blink-settle': 'blinkSettle 2.4s step-end 1 forwards',
         fadeUp: '.5s ease-out forwards fadeUp',
       },
     },
