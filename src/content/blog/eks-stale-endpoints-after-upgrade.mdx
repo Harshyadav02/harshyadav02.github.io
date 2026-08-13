@@ -1,0 +1,77 @@
+---
+title: 'Debugging Post-Upgrade Timeouts: The Case of Stale Endpoints in EKS'
+pubDate: 2026-08-13
+description: 'After an EKS 1.32 to 1.33 upgrade, internal services started timing out while every pod looked healthy. The culprit was stale Endpoints pointing at dead pod IPs. Here is how we found it and fixed it.'
+tags: ['Kubernetes', 'EKS', 'Troubleshooting']
+author: 'Harsh Yadav'
+---
+
+## The Incident
+
+The EKS control plane upgrade from **1.32 to 1.33** was completed without a hitch. Nodes were replaced, pods rescheduled, and everything looked green in the dashboards. Then the tickets started rolling in.
+
+`argocd-repo-server` was timing out while calling `argo-redis`. A few other internal services were timing out too. Classic "everything is broken but nothing is crashing" situation.
+
+## Initial Troubleshooting
+
+The confusing part was that **pods looked perfectly healthy**. Restart policies, liveness, readiness — all green. So we worked through the usual suspects:
+
+1. **CoreDNS** — the most common cause of "some services resolve, some don't" after an upgrade. We checked whether the running version was compatible with EKS 1.33 (it was), and DNS was working for some services but not others. DNS queries resolved fine. **Ruled out.**
+2. **Network policies** — if a policy was accidentally tightened, traffic between certain namespaces could be blocked. We audited the policies and they looked fine. **Ruled out.**
+3. A few other quick checks — service selectors, pod labels, CNI health. All looked normal.
+
+We were stuck. Healthy pods, working DNS, no broken policies — yet traffic between internal services was timing out.
+
+## The Breakthrough
+
+As a last resort, we **deleted the Endpoints objects** for the affected services. The services started working almost immediately.
+
+Here's what was happening under the hood:
+
+During the control plane upgrade, `kube-controller-manager` restarted briefly. In that window, nodes were replaced and pods came back with **new IPs** — but the Endpoints objects **never caught up**. `kube-proxy` kept routing traffic to the dead IPs from the old nodes. Pods looked healthy because the *pods* were fine; the stale routing data was the problem.
+
+Deleting the stale Endpoints forced the controller to reconcile them:
+
+```
+kubectl delete endpoints argo-redis -n argocd
+```
+
+The Endpoints controller recreated the object with the correct pod IPs, and traffic flowed again.
+
+## Why This Happens
+
+During EKS upgrades, the `kube-controller-manager` restarts as part of the control plane rollout. In that restart window, it can **miss watch events**. When nodes are replaced and pods get new IPs, the Endpoints controller is normally responsible for picking that up — but if the watch stream is interrupted at exactly the wrong moment, stale state can **silently survive**.
+
+This is the dangerous part: there is no error, no failed rollout, no unhealthy pod. The system just quietly routes traffic to IPs that no longer exist.
+
+## Key Takeaways
+
+If services are broken after an upgrade but pods look healthy, **check your Endpoints before anything else**:
+
+```sh
+kubectl get endpoints -A
+```
+
+Look for Endpoint objects whose `addresses` don't match the current pod IPs of the backing workload. Cross-reference with:
+
+```sh
+kubectl get pods -o wide
+```
+
+Stale Endpoints are cheap to fix — just delete the object and let the controller rebuild it. But catching the pattern early turns a multi-hour debugging session into a five-minute fix.
+
+## A Note on EndpointSlices
+
+It's also worth noting that Kubernetes 1.33 **deprecates the v1 Endpoints API** in favor of **EndpointSlices**. If your cluster hasn't fully transitioned yet, a good post-upgrade hygiene check is:
+
+```sh
+kubectl get endpointslices -A
+```
+
+EndpointSlices are the mechanism controllers actually use today, and verifying your cluster has cleanly transitioned avoids running into legacy Endpoints edge cases on future upgrades.
+
+## Conclusion
+
+Upgrade breakage doesn't always announce itself loudly. This incident was a good reminder that **"pods healthy" and "service healthy" are two very different things**. Routing data lives outside the pod, and after any control plane upgrade it's worth verifying that the data plane views of the world — Endpoints, EndpointSlices, kube-proxy — actually match reality.
+
+Add "check Endpoints after a cluster upgrade" to your post-upgrade checklist. It's the kind of check that costs two minutes and saves an entire incident.
