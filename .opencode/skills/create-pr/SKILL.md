@@ -8,6 +8,15 @@ description: Prepare a detailed GitHub pull request title and description from t
 
 When the user asks to create, raise, open, or submit a PR, follow this workflow.
 
+## Hard Rules
+
+* **Never commit to `main`.** Work on a dedicated feature branch named for the change (e.g. `fix/blog-tag-filtering`, `feat/xyz`).
+* **Never push `main` to the remote directly.** `main` is updated only by merging a reviewed PR.
+* When implementing a fix or feature (not only when asked for a PR), create a feature branch first and commit there. Pushing the feature branch is fine; pushing `main` is not.
+* If you are on `main` with changes, create a feature branch (`git switch -c <feature-branch>`) before committing.
+* If the requested change is already committed on `main` (e.g. pushed directly by mistake), do NOT open a PR for it. Report that it bypassed the PR flow and ask how to proceed.
+* Do not open an empty PR. If the feature branch has no commits ahead of `main`, there is nothing to PR.
+
 ## 1. Inspect the Changes
 
 First inspect the repository:
@@ -29,6 +38,8 @@ Determine:
 * Purpose of the changes
 
 Do not create a PR description based only on the user's request. Base it on the actual repository changes.
+
+Before proceeding, verify the current branch is not `main`. If it is, the change needs a feature branch — see Commit Changes. Confirm whether any commits were pushed directly to `main`; if so, there is nothing to PR.
 
 ## 2. Review the Complete Diff
 
@@ -59,14 +70,18 @@ Only report validation that was actually performed.
 
 If the requested changes are not committed:
 
-1. Stage only files related to the requested task.
-2. Review the staged diff.
-3. Create a concise conventional commit message.
-4. Commit the changes.
+1. Ensure you are on a feature branch, not `main`. If on `main`, create one first with `git switch -c <feature-branch>` before staging anything.
+2. Stage only files related to the requested task.
+3. Review the staged diff.
+4. Create a concise conventional commit message.
+5. Commit the changes.
+6. Push the feature branch to the remote with `git push -u origin <feature-branch>`.
 
 Do not blindly use `git add .`.
 
 Do not commit unrelated changes.
+
+Do not push `main`.
 
 ## 5. Generate PR Title
 
