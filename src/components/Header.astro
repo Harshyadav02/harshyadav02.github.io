@@ -1,6 +1,4 @@
 ---
-import { themes } from '../data/themes';
-
 const navItems = [
   { label: 'Home', href: '/' },
   { label: 'About', href: '/about' },
@@ -86,55 +84,6 @@ const workActive = currentPath.startsWith('/projects');
     </nav>
 
     <div class="flex items-center gap-3">
-      <div class="relative theme-menu">
-        <button
-          id="theme-toggle"
-          type="button"
-          class="p-2 rounded-md text-ink-muted hover:text-mint transition-colors"
-          aria-label="Change theme"
-          aria-haspopup="true"
-          aria-expanded="false"
-          aria-controls="theme-list"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.6 0-.5-.2-.9-.5-1.2-.3-.4-.5-.8-.5-1.3 0-1 .8-1.9 1.9-1.9H16a5 5 0 0 0 5-5C21 6.5 17 3 12 3Z"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linejoin="round"
-            />
-            <circle cx="7.5" cy="11.5" r="1.2" fill="currentColor" />
-            <circle cx="10.5" cy="7.5" r="1.2" fill="currentColor" />
-            <circle cx="15" cy="7.5" r="1.2" fill="currentColor" />
-          </svg>
-        </button>
-        <div id="theme-list" class="theme-dropdown absolute right-0 top-full pt-2 z-50">
-          <div class="w-64 max-h-[calc(100vh-5rem)] overflow-y-auto rounded-lg border border-border bg-surface-raised p-1.5 shadow-xl">
-            <p class="px-2.5 pt-1.5 pb-2 font-mono text-[10px] uppercase tracking-widest text-ink-faint">theme</p>
-            {
-              themes.map((theme) => (
-                <button
-                  type="button"
-                  data-theme-option={theme.id}
-                  aria-pressed="false"
-                  class="theme-option w-full flex items-center gap-3 rounded-md px-2.5 py-2 text-left hover:bg-bg/60 transition-colors"
-                >
-                  <span
-                    class="w-6 h-6 shrink-0 rounded-full border border-border"
-                    style={`background: linear-gradient(135deg, ${theme.swatch[0]} 50%, ${theme.swatch[1]} 50%);`}
-                    aria-hidden="true"
-                  />
-                  <span class="flex-1 min-w-0">
-                    <span class="block font-mono text-sm text-ink">{theme.label}</span>
-                    <span class="block text-xs text-ink-faint truncate">{theme.description}</span>
-                  </span>
-                  <span class="check text-mint font-mono text-sm" aria-hidden="true">✓</span>
-                </button>
-              ))
-            }
-          </div>
-        </div>
-      </div>
       <button
         id="nav-toggle"
         class="md:hidden p-2 -mr-2 text-ink-muted hover:text-ink"
@@ -201,66 +150,9 @@ const workActive = currentPath.startsWith('/projects');
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') setWorkOpen(false);
   });
-
-  const root = document.documentElement;
-  const themeMenu = document.querySelector('.theme-menu');
-  const themeButton = document.getElementById('theme-toggle');
-  const themeOptions = document.querySelectorAll('[data-theme-option]');
-  const setThemeOpen = (open) => {
-    if (!themeMenu || !themeButton) return;
-    themeMenu.setAttribute('data-open', String(open));
-    themeButton.setAttribute('aria-expanded', String(open));
-  };
-  const markActiveTheme = () => {
-    themeOptions.forEach((opt) => {
-      opt.setAttribute('aria-pressed', String(opt.dataset.themeOption === root.dataset.theme));
-    });
-  };
-  const applyTheme = (theme) => {
-    root.classList.add('theme-transition');
-    root.dataset.theme = theme;
-    try {
-      localStorage.setItem('theme', theme);
-    } catch {}
-    markActiveTheme();
-    setTimeout(() => root.classList.remove('theme-transition'), 350);
-  };
-  markActiveTheme();
-  themeButton?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    setThemeOpen(themeMenu.getAttribute('data-open') !== 'true');
-  });
-  themeOptions.forEach((opt) => {
-    opt.addEventListener('click', () => {
-      applyTheme(opt.dataset.themeOption);
-      setThemeOpen(false);
-      themeButton?.focus();
-    });
-  });
-  document.addEventListener('click', (e) => {
-    if (themeMenu && !themeMenu.contains(e.target)) setThemeOpen(false);
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') setThemeOpen(false);
-  });
 </script>
 
 <style>
-  .theme-menu .theme-dropdown {
-    display: none;
-  }
-  .theme-menu[data-open='true'] .theme-dropdown {
-    display: block;
-  }
-  .theme-option .check {
-    visibility: hidden;
-  }
-  .theme-option[aria-pressed='true'] .check {
-    visibility: visible;
-  }
-  .theme-option[aria-pressed='true'] {
-    background-color: rgb(var(--c-mint) / 0.08);
-  }
   .work-menu .dropdown {
     display: none;
   }
