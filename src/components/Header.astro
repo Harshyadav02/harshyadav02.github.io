@@ -109,7 +109,7 @@ const workActive = currentPath.startsWith('/projects');
           </svg>
         </button>
         <div id="theme-list" class="theme-dropdown absolute right-0 top-full pt-2 z-50">
-          <div class="w-64 rounded-lg border border-border bg-surface-raised p-1.5 shadow-xl">
+          <div class="w-64 max-h-[calc(100vh-5rem)] overflow-y-auto rounded-lg border border-border bg-surface-raised p-1.5 shadow-xl">
             <p class="px-2.5 pt-1.5 pb-2 font-mono text-[10px] uppercase tracking-widest text-ink-faint">theme</p>
             {
               themes.map((theme) => (
