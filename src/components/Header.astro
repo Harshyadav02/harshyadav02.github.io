@@ -3,15 +3,10 @@ const navItems = [
   { label: 'Home', href: '/' },
   { label: 'About', href: '/about' },
   { label: 'Blog', href: '/blog' },
-  {
-    label: 'Work',
-    children: [{ label: 'Client Engagement', href: '/projects' }],
-  },
   { label: 'Contact', href: '/#contact' },
 ];
 
 const currentPath = new URL(Astro.request.url).pathname;
-const workActive = currentPath.startsWith('/projects');
 ---
 
 <header class="sticky top-0 z-40 border-b border-border/60 bg-bg/80 backdrop-blur-md">
@@ -24,49 +19,6 @@ const workActive = currentPath.startsWith('/projects');
     <nav class="hidden md:flex items-center gap-1 font-mono text-sm" aria-label="Main">
       {
         navItems.map((item) => {
-          if (item.children) {
-            return (
-              <div class="relative group work-menu">
-                <button
-                  type="button"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                  aria-controls="work-menu"
-                  class:list={[
-                    'flex items-center gap-1 px-3 py-2 rounded-md transition-colors cursor-pointer',
-                    workActive ? 'text-mint' : 'text-ink-muted hover:text-ink',
-                  ]}
-                >
-                  {item.label}
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 12 12"
-                    fill="none"
-                    aria-hidden="true"
-                    class="chevron transition-transform"
-                  >
-                    <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
-                </button>
-                <div id="work-menu" class="dropdown absolute left-0 top-full pt-2">
-                  <div class="min-w-48 rounded-lg border border-border bg-surface-raised py-2 shadow-xl">
-                    {item.children.map((child) => (
-                      <a
-                        href={child.href}
-                        class:list={[
-                          'block px-4 py-2 text-ink-muted hover:text-mint hover:bg-bg/50 transition-colors',
-                          currentPath === child.href && 'text-mint',
-                        ]}
-                      >
-                        {child.label}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          }
           const active = currentPath === item.href;
           return (
             <a
@@ -105,16 +57,6 @@ const workActive = currentPath.startsWith('/projects');
   >
     {
       navItems.map((item) => {
-        if (item.children) {
-          return (
-            <div class="mt-1">
-              <p class="px-2 pt-3 pb-1 text-[10px] uppercase tracking-widest text-ink-faint">{item.label}</p>
-              {item.children.map((child) => (
-                <a href={child.href} class="block px-4 py-2 text-ink-muted hover:text-mint">{child.label}</a>
-              ))}
-            </div>
-          );
-        }
         return (
           <a href={item.href} class="block py-2.5 text-ink-muted hover:text-mint">{item.label}</a>
         );
@@ -131,43 +73,4 @@ const workActive = currentPath.startsWith('/projects');
     menu?.classList.toggle('hidden');
     toggle.setAttribute('aria-expanded', String(!!isHidden));
   });
-
-  const workMenu = document.querySelector('.work-menu');
-  const workButton = workMenu?.querySelector('button');
-  const setWorkOpen = (open) => {
-    if (!workMenu || !workButton) return;
-    workMenu.setAttribute('data-open', String(open));
-    workButton.setAttribute('aria-expanded', String(open));
-    if (!open) workButton.blur();
-  };
-  workButton?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    setWorkOpen(workMenu.getAttribute('data-open') !== 'true');
-  });
-  document.addEventListener('click', (e) => {
-    if (workMenu && !workMenu.contains(e.target)) setWorkOpen(false);
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') setWorkOpen(false);
-  });
 </script>
-
-<style>
-  .work-menu .dropdown {
-    display: none;
-  }
-  .work-menu:focus-within .dropdown,
-  .work-menu[data-open='true'] .dropdown {
-    display: block;
-  }
-  @media (hover: hover) {
-    .work-menu:hover .dropdown {
-      display: block;
-    }
-  }
-  @media (hover: hover) {
-    .work-menu:hover .chevron {
-      transform: rotate(180deg);
-    }
-  }
-</style>

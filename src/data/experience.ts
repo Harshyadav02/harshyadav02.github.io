@@ -9,19 +9,17 @@ export interface ExperienceEntry {
   company: string;
   companyUrl?: string;
   location: string;
-  clients?: string[];
   roles: ExperienceRole[];
 }
 
 // Edit this array to update the Experience page/section.
-// Client engagement details are intentionally kept general — specific client
-// names and infrastructure details are left out of a public portfolio.
+// Client engagement details are intentionally kept general — client names and
+// infrastructure details must not appear on the public portfolio.
 export const experience: ExperienceEntry[] = [
   {
     company: 'CloudRaft',
     companyUrl: 'https://www.cloudraft.io/',
     location: 'Remote', // TODO: adjust if you want a specific location shown
-    clients: ['Hearzap', 'Enkrypt AI', 'SkySwitch'],
     roles: [
       {
         title: 'Associate Site Reliability Engineer',
