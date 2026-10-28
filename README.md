@@ -26,7 +26,6 @@ All the editable copy lives outside the components, in `src/data/`:
 |---|---|
 | Name, bio, tagline, social links, contact email | `src/data/profile.ts` |
 | Work experience | `src/data/experience.ts` |
-| Projects | `src/data/projects.ts` |
 | Skills groups | `src/data/skills.ts` |
 
 Edit those and the site updates everywhere it's used — no need to touch any `.astro` component.
@@ -65,7 +64,7 @@ Search the codebase for `TODO` to find all of these, or check here:
 - `src/data/experience.ts` — start date for the CloudRaft role (and any earlier roles you want listed)
 - `astro.config.mjs` — the `site` value is set to a placeholder (`https://harshyadav.dev`); change it to your real domain or `https://<your-username>.github.io` (or `/<repo-name>` — see below) before deploying, since it's used for the sitemap, RSS, and canonical URLs
 
-Note on the Experience/Projects copy: I wrote it in general terms about the kind of platform, reliability, and observability work you do, without naming specific client accounts or incident details — that felt like the right call for a public portfolio. Edit `src/data/experience.ts` and `src/data/projects.ts` directly if you want it to say something different.
+Note on the Experience copy: it describes the kind of platform, reliability, and observability work in general terms. Client names, client projects and incident details must not be published on this site.
 
 ## Deploying to GitHub Pages
 
@@ -83,12 +82,12 @@ A workflow is already set up at `.github/workflows/deploy.yml` using Astro's off
 
 ```
 src/
-├── components/     Presentational Astro components (Header, Hero, Skills, Experience, Projects, BlogCard, etc.)
+├── components/     Presentational Astro components (Header, Hero, Skills, Experience, BlogCard, etc.)
 ├── content/blog/   Markdown blog posts (Content Collections)
-├── data/           Editable content: profile, experience, projects, skills
+├── data/           Editable content: profile, experience, skills
 ├── layouts/        Layout.astro (base HTML shell + SEO), BlogPost.astro (article layout)
 ├── lib/            Small utilities (reading time, date formatting)
-├── pages/          Routes: index, about, experience, projects, blog/*, rss.xml, 404
+├── pages/          Routes: index, about, blog/*, rss.xml, 404
 └── styles/         global.css (Tailwind layers + the site's shared component classes)
 ```
 

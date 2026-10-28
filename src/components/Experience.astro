@@ -24,13 +24,6 @@ const entries = compact ? experience.slice(0, 1) : experience;
           <span class="font-mono text-xs text-ink-faint">{company.location}</span>
         </div>
 
-        {company.clients && (
-          <div class="mt-2 flex flex-wrap items-center gap-2">
-            <span class="font-mono text-xs text-ink-faint">clients:</span>
-            {company.clients.map((client) => <span class="pill">{client}</span>)}
-          </div>
-        )}
-
         <div class="mt-5 space-y-8">
           {
             company.roles.map((role) => (

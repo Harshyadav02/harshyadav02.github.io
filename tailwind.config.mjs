@@ -3,32 +3,35 @@ export default {
   content: ['./src/**/*.{astro,html,js,jsx,md,mdx,ts,tsx}'],
   theme: {
     extend: {
+      // Palette is driven by CSS variables (see src/styles/global.css) so the
+      // theme switcher can swap it at runtime. Values are space-separated RGB
+      // channels so Tailwind opacity modifiers like `border-mint/40` still work.
       colors: {
         bg: {
-          DEFAULT: '#0a0d10',
-          soft: '#0d1114',
+          DEFAULT: 'rgb(var(--c-bg) / <alpha-value>)',
+          soft: 'rgb(var(--c-bg-soft) / <alpha-value>)',
         },
         surface: {
-          DEFAULT: '#11151a',
-          raised: '#161b21',
+          DEFAULT: 'rgb(var(--c-surface) / <alpha-value>)',
+          raised: 'rgb(var(--c-surface-raised) / <alpha-value>)',
         },
         border: {
-          DEFAULT: '#212830',
-          soft: '#1a2027',
+          DEFAULT: 'rgb(var(--c-border) / <alpha-value>)',
+          soft: 'rgb(var(--c-border-soft) / <alpha-value>)',
         },
         ink: {
-          DEFAULT: '#e5e9ec',
-          muted: '#8d9aa5',
-          faint: '#5b6773',
+          DEFAULT: 'rgb(var(--c-ink) / <alpha-value>)',
+          muted: 'rgb(var(--c-ink-muted) / <alpha-value>)',
+          faint: 'rgb(var(--c-ink-faint) / <alpha-value>)',
         },
         mint: {
-          DEFAULT: '#4ade9a',
-          dim: '#2f8f66',
-          bright: '#6ef0b3',
+          DEFAULT: 'rgb(var(--c-mint) / <alpha-value>)',
+          dim: 'rgb(var(--c-mint-dim) / <alpha-value>)',
+          bright: 'rgb(var(--c-mint-bright) / <alpha-value>)',
         },
         amber: {
-          DEFAULT: '#e8a54b',
-          dim: '#a97633',
+          DEFAULT: 'rgb(var(--c-amber) / <alpha-value>)',
+          dim: 'rgb(var(--c-amber-dim) / <alpha-value>)',
         },
       },
       fontFamily: {

@@ -3,8 +3,26 @@
 @tailwind utilities;
 
 @layer base {
+  /* Palette as RGB channels (consumed by tailwind.config) so Tailwind
+     opacity modifiers like `border-mint/40` work. Navy-tinted dark with mint. */
   :root {
     color-scheme: dark;
+    --c-bg: 6 10 17;
+    --c-bg-soft: 9 14 23;
+    --c-surface: 13 19 30;
+    --c-surface-raised: 18 26 40;
+    --c-border: 34 46 64;
+    --c-border-soft: 25 35 51;
+    --c-ink: 232 238 245;
+    --c-ink-muted: 148 163 184;
+    --c-ink-faint: 94 110 132;
+    --c-mint: 74 222 154;
+    --c-mint-dim: 45 140 120;
+    --c-mint-bright: 125 245 200;
+    --c-teal: 45 212 191;
+    --c-sky: 56 189 248;
+    --c-amber: 232 165 75;
+    --c-amber-dim: 169 118 51;
   }
 
   html {
@@ -36,7 +54,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid theme('colors.mint.DEFAULT');
+    outline: 2px solid rgb(var(--c-mint));
     outline-offset: 2px;
     border-radius: 2px;
   }
@@ -51,7 +69,7 @@
   .log-eyebrow::before {
     content: '';
     @apply inline-block w-1.5 h-1.5 rounded-full bg-mint;
-    box-shadow: 0 0 0 3px rgba(74, 222, 154, 0.15);
+    box-shadow: 0 0 0 3px rgb(var(--c-mint) / 0.15);
   }
 
   .card {
@@ -126,4 +144,63 @@
   .copy-btn {
     @apply absolute top-2.5 right-2.5 rounded-md border border-border bg-surface px-2 py-1 text-[10px] font-mono uppercase tracking-wide text-ink-muted opacity-0 transition-opacity hover:text-mint;
   }
+}
+
+/* ---- Aurora backdrop ----------------------------------------------------
+   Fixed, non-interactive layer rendered in Layout.astro: two blurred mint/teal
+   glows that drift slowly behind the page. */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.aurora::before,
+.aurora::after {
+  content: '';
+  position: absolute;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.22;
+  animation: aurora-drift 28s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.aurora::before {
+  top: -25vmax;
+  left: -15vmax;
+  background: radial-gradient(circle, rgb(var(--c-mint)), transparent 65%);
+}
+.aurora::after {
+  bottom: -30vmax;
+  right: -20vmax;
+  background: radial-gradient(circle, rgb(var(--c-teal)), rgb(var(--c-sky) / 0.6) 40%, transparent 65%);
+  animation-delay: -14s;
+}
+@keyframes aurora-drift {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(8vmax, 6vmax) scale(1.15); }
+  100% { transform: translate(-6vmax, 10vmax) scale(0.95); }
+}
+
+/* ---- Glass surfaces ----------------------------------------------------- */
+.card {
+  background-color: rgb(var(--c-surface) / 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.card-hover:hover {
+  box-shadow: 0 10px 40px -12px rgb(var(--c-mint) / 0.35);
+}
+.hero-name {
+  background: linear-gradient(100deg, rgb(var(--c-ink)) 20%, rgb(var(--c-mint-bright)) 60%, rgb(var(--c-teal)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.btn-primary {
+  background-image: linear-gradient(100deg, rgb(var(--c-mint)), rgb(var(--c-teal)));
+  box-shadow: 0 6px 24px -8px rgb(var(--c-mint) / 0.6);
 }
