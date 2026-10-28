@@ -3,8 +3,83 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  /* ---- Themes ------------------------------------------------------------
+     Each theme sets the palette as RGB channels (consumed by tailwind.config).
+     `data-theme` is set on <html> by the inline script in Layout.astro. */
+  :root,
+  [data-theme='terminal'] {
     color-scheme: dark;
+    --c-bg: 10 13 16;
+    --c-bg-soft: 13 17 20;
+    --c-surface: 17 21 26;
+    --c-surface-raised: 22 27 33;
+    --c-border: 33 40 48;
+    --c-border-soft: 26 32 39;
+    --c-ink: 229 233 236;
+    --c-ink-muted: 141 154 165;
+    --c-ink-faint: 91 103 115;
+    --c-mint: 74 222 154;
+    --c-mint-dim: 47 143 102;
+    --c-mint-bright: 110 240 179;
+    --c-amber: 232 165 75;
+    --c-amber-dim: 169 118 51;
+  }
+
+  /* Aurora: navy-tinted dark with drifting mint/teal glows and glass cards. */
+  [data-theme='aurora'] {
+    color-scheme: dark;
+    --c-bg: 6 10 17;
+    --c-bg-soft: 9 14 23;
+    --c-surface: 13 19 30;
+    --c-surface-raised: 18 26 40;
+    --c-border: 34 46 64;
+    --c-border-soft: 25 35 51;
+    --c-ink: 232 238 245;
+    --c-ink-muted: 148 163 184;
+    --c-ink-faint: 94 110 132;
+    --c-mint: 74 222 154;
+    --c-mint-dim: 45 140 120;
+    --c-mint-bright: 125 245 200;
+    --c-amber: 232 165 75;
+    --c-amber-dim: 169 118 51;
+  }
+
+  /* Grid: green-black CRT console with a blueprint grid and phosphor glow. */
+  [data-theme='grid'] {
+    color-scheme: dark;
+    --c-bg: 4 9 6;
+    --c-bg-soft: 6 12 8;
+    --c-surface: 8 16 11;
+    --c-surface-raised: 11 22 15;
+    --c-border: 24 56 38;
+    --c-border-soft: 16 40 27;
+    --c-ink: 214 245 228;
+    --c-ink-muted: 128 172 147;
+    --c-ink-faint: 76 114 92;
+    --c-mint: 74 222 154;
+    --c-mint-dim: 47 143 102;
+    --c-mint-bright: 130 255 190;
+    --c-amber: 232 165 75;
+    --c-amber-dim: 169 118 51;
+  }
+
+  /* Daylight: the same mint identity on a light, paper-like surface. */
+  [data-theme='daylight'] {
+    color-scheme: light;
+    --c-bg: 246 249 247;
+    --c-bg-soft: 239 244 241;
+    --c-surface: 255 255 255;
+    --c-surface-raised: 241 246 243;
+    --c-border: 212 223 217;
+    --c-border-soft: 227 235 231;
+    --c-ink: 16 24 21;
+    --c-ink-muted: 74 89 83;
+    --c-ink-faint: 118 133 126;
+    --c-mint: 4 120 77;
+    --c-mint-dim: 3 96 62;
+    --c-mint-bright: 5 150 96;
+    --c-amber: 176 104 16;
+    --c-amber-dim: 138 82 12;
   }
 
   html {
@@ -36,7 +111,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid theme('colors.mint.DEFAULT');
+    outline: 2px solid rgb(var(--c-mint));
     outline-offset: 2px;
     border-radius: 2px;
   }
@@ -51,7 +126,7 @@
   .log-eyebrow::before {
     content: '';
     @apply inline-block w-1.5 h-1.5 rounded-full bg-mint;
-    box-shadow: 0 0 0 3px rgba(74, 222, 154, 0.15);
+    box-shadow: 0 0 0 3px rgb(var(--c-mint) / 0.15);
   }
 
   .card {
@@ -126,4 +201,134 @@
   .copy-btn {
     @apply absolute top-2.5 right-2.5 rounded-md border border-border bg-surface px-2 py-1 text-[10px] font-mono uppercase tracking-wide text-ink-muted opacity-0 transition-opacity hover:text-mint;
   }
+}
+
+/* ---- Syntax highlighting ------------------------------------------------
+   Shiki emits both light and dark token colors (astro.config.mjs); pick one
+   per theme. */
+.astro-code,
+.astro-code span {
+  color: var(--shiki-dark);
+  font-style: var(--shiki-dark-font-style);
+  font-weight: var(--shiki-dark-font-weight);
+}
+[data-theme='daylight'] .astro-code,
+[data-theme='daylight'] .astro-code span {
+  color: var(--shiki-light);
+  font-style: var(--shiki-light-font-style);
+  font-weight: var(--shiki-light-font-weight);
+}
+
+/* ---- Theme effects ------------------------------------------------------
+   `.theme-fx` is a fixed, non-interactive backdrop layer rendered in
+   Layout.astro. Each theme decorates it (and a few components) differently. */
+.theme-fx {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease !important;
+}
+
+/* Terminal: a faint mint glow behind the hero. */
+[data-theme='terminal'] .theme-fx,
+:root:not([data-theme]) .theme-fx {
+  background: radial-gradient(60rem 30rem at 85% -10%, rgb(var(--c-mint) / 0.06), transparent 70%);
+}
+
+/* Aurora */
+[data-theme='aurora'] .theme-fx::before,
+[data-theme='aurora'] .theme-fx::after {
+  content: '';
+  position: absolute;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.22;
+  animation: aurora-drift 28s ease-in-out infinite alternate;
+}
+[data-theme='aurora'] .theme-fx::before {
+  top: -25vmax;
+  left: -15vmax;
+  background: radial-gradient(circle, rgb(var(--c-mint)), transparent 65%);
+}
+[data-theme='aurora'] .theme-fx::after {
+  bottom: -30vmax;
+  right: -20vmax;
+  background: radial-gradient(circle, rgb(45 212 191), rgb(56 189 248 / 0.6) 40%, transparent 65%);
+  animation-delay: -14s;
+}
+@keyframes aurora-drift {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(8vmax, 6vmax) scale(1.15); }
+  100% { transform: translate(-6vmax, 10vmax) scale(0.95); }
+}
+[data-theme='aurora'] .card {
+  background-color: rgb(var(--c-surface) / 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+[data-theme='aurora'] .card-hover:hover {
+  box-shadow: 0 10px 40px -12px rgb(var(--c-mint) / 0.35);
+}
+[data-theme='aurora'] .hero-name {
+  background: linear-gradient(100deg, rgb(var(--c-ink)) 20%, rgb(var(--c-mint-bright)) 60%, rgb(45 212 191));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+[data-theme='aurora'] .btn-primary {
+  background-image: linear-gradient(100deg, rgb(var(--c-mint)), rgb(45 212 191));
+  box-shadow: 0 6px 24px -8px rgb(var(--c-mint) / 0.6);
+}
+
+/* Grid */
+[data-theme='grid'] .theme-fx {
+  background-image:
+    linear-gradient(rgb(var(--c-mint) / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--c-mint) / 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+}
+[data-theme='grid'] .theme-fx::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(to bottom, transparent 0 2px, rgb(0 0 0 / 0.18) 2px 3px);
+}
+[data-theme='grid'] .text-mint,
+[data-theme='grid'] .log-eyebrow,
+[data-theme='grid'] .hero-name {
+  text-shadow: 0 0 12px rgb(var(--c-mint) / 0.45);
+}
+[data-theme='grid'] .card {
+  box-shadow: inset 0 0 0 1px rgb(var(--c-mint) / 0.04), 0 0 24px -12px rgb(var(--c-mint) / 0.25);
+}
+[data-theme='grid'] .card-hover:hover {
+  box-shadow: inset 0 0 0 1px rgb(var(--c-mint) / 0.15), 0 0 32px -8px rgb(var(--c-mint) / 0.4);
+}
+[data-theme='grid'] .btn-primary {
+  box-shadow: 0 0 18px -2px rgb(var(--c-mint) / 0.55);
+}
+
+/* Daylight */
+[data-theme='daylight'] .theme-fx {
+  background:
+    radial-gradient(50rem 26rem at 90% -10%, rgb(var(--c-mint) / 0.10), transparent 70%),
+    radial-gradient(40rem 22rem at -10% 30%, rgb(45 212 191 / 0.07), transparent 70%);
+}
+[data-theme='daylight'] .card {
+  box-shadow: 0 1px 2px rgb(16 24 21 / 0.04), 0 4px 16px -8px rgb(16 24 21 / 0.08);
+}
+[data-theme='daylight'] .btn-primary {
+  color: #fff;
 }

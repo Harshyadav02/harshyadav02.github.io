@@ -14,7 +14,9 @@ export default defineConfig({
   ],
   markdown: {
     shikiConfig: {
-      theme: 'github-dark',
+      themes: { light: 'github-light', dark: 'github-dark' },
+      // Colors are applied per site theme in src/styles/global.css.
+      defaultColor: false,
       wrap: true,
     },
   },
