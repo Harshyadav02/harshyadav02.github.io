@@ -1,0 +1,182 @@
+---
+title: 'GPU from Zero, Part 2: Reading nvidia-smi Field by Field'
+pubDate: 2026-11-03
+description: 'nvidia-smi is the first command to run on any GPU machine. This beginner-friendly guide explains every field in its output using a real example from a free Colab T4, and highlights the few fields you should check first.'
+tags: ['GPU', 'Kubernetes', 'Learning']
+author: 'Harsh Yadav'
+---
+
+## Introduction
+
+In [Part 1](/blog/gpu-from-zero-01-what-is-a-gpu), we looked at what a GPU is and why its memory (VRAM) matters. In this part, we look at the most useful command for working with NVIDIA GPUs: `nvidia-smi`.
+
+`nvidia-smi` (NVIDIA System Management Interface) is a command-line tool that comes with the NVIDIA driver. It shows which GPUs a machine has, how much memory is being used, and whether the GPU is healthy. Whether you're on a laptop, a cloud VM, or inside a Kubernetes pod, this is usually the first command to run when working with or troubleshooting a GPU.
+
+**In this part, you will learn:**
+
+- How the `nvidia-smi` output is organised
+- What every field means, in plain language
+- The four fields to check first when something goes wrong
+- Why the "CUDA Version" shown is not what most people think
+
+## Running it yourself
+
+You can follow along for free using Google Colab:
+
+1. Open [colab.research.google.com](https://colab.research.google.com) and create a new notebook.
+2. Select **Runtime → Change runtime type**, choose **T4 GPU**, and click **Save**.
+3. Type `!nvidia-smi` in a cell and press **Shift + Enter**. The `!` tells Colab to run it as a shell command.
+
+This is the real output from that notebook:
+
+```text
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
+| N/A   36C    P8             13W /   70W |       0MiB /  15360MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+```
+
+It looks complex at first, but it has only three parts:
+
+1. **The header** (top line): driver and CUDA versions
+2. **The GPU table** (middle): one block per GPU, with its status
+3. **The processes table** (bottom): which programs are using the GPU
+
+The diagram below labels every field. The sections after it explain each one.
+
+![Annotated nvidia-smi output from a Colab T4, with every field numbered and explained](/images/blog/gpu-from-zero/02-reading-nvidia-smi.webp)
+
+## Part 1 of the output: the header
+
+```text
+| NVIDIA-SMI 580.82.07   Driver Version: 580.82.07   CUDA Version: 13.0 |
+```
+
+### Driver Version
+
+This is the version of the NVIDIA **driver**, the software that lets the operating system talk to the GPU. Without a driver, the GPU can't be used at all.
+
+In Kubernetes, the driver is installed on the node, not inside your container. It usually comes from the node image (for example, the Amazon EKS GPU-optimized AMI) or is installed by the NVIDIA GPU Operator.
+
+### CUDA Version
+
+This field is often misunderstood.
+
+**CUDA** is NVIDIA's platform that lets applications run calculations on the GPU. Applications such as PyTorch are built against a specific CUDA version.
+
+The CUDA Version shown here does **not** mean CUDA 13.0 is installed. It means:
+
+> This driver can run applications built for CUDA **13.0 or older**.
+
+The CUDA version your application actually uses is packaged with the application itself, for example inside the PyTorch library or inside your container image.
+
+This gives us one of the most important rules when working with GPUs:
+
+> The driver must support a CUDA version **equal to or newer than** the one your application was built with.
+
+| Driver supports | Application built with | Result |
+|---|---|---|
+| CUDA 13.0 | CUDA 12.4 | Works. An older application on a newer driver is fine |
+| CUDA 12.2 | CUDA 13.0 | Fails with `CUDA driver version is insufficient for CUDA runtime version` |
+
+If you ever see that error in a pod, the node's driver is too old for your container image. We'll reproduce this error on purpose later in the series.
+
+## Part 2 of the output: the GPU table
+
+Each GPU gets its own block of two rows. The column headers at the top tell you what each value means. For example, `Temp` in the header row lines up with `36C` in the data row.
+
+### The four fields to check first
+
+When something isn't working, start with these:
+
+| Field | Value here | What it tells you | What to look for |
+|---|---|---|---|
+| **Memory-Usage** | `0MiB / 15360MiB` | VRAM used vs total available | Close to the total means you're about to hit "out of memory" errors |
+| **GPU-Util** | `0%` | How busy the GPU has been recently | 0% while your app is running means the GPU isn't being used |
+| **Volatile Uncorr. ECC** | `0` | Memory errors the GPU couldn't correct | Any number above 0 points to a hardware fault |
+| **Temp** | `36C` | GPU temperature | Very high temperatures cause the GPU to slow itself down |
+
+### Why 15360 MiB and not 16 GB?
+
+The T4 is sold as a 16 GB GPU, but `nvidia-smi` shows 15360 MiB, which is exactly 15 GiB. A portion of the physical memory is reserved by the GPU and its driver, so it isn't available to applications.
+
+When checking whether a model will fit (using the rule of thumb from Part 1), always use the number `nvidia-smi` reports, not the number on the product page.
+
+### GPU-Util can be misleading
+
+It's natural to read `GPU-Util: 100%` as "the GPU is fully used". That isn't what it measures.
+
+GPU-Util is the **percentage of time** during which the GPU was running at least one task. It doesn't say **how much** of the GPU was used during that time. A small program that keeps the GPU slightly busy all the time can show 100%, even though most of the GPU's cores are idle.
+
+Think of it like a shop that's "open 100% of the day" but has only one customer at a time. It's always open, but far from full. GPU-Util is useful as a first signal, but it shouldn't be the only metric used for decisions like autoscaling. Later in the series, we look at better metrics.
+
+### All other fields
+
+| Field | Value here | Meaning |
+|---|---|---|
+| GPU | `0` | The GPU's index number. The first GPU is 0, the second is 1, and so on |
+| Name | `Tesla T4` | The GPU model. AWS `g4dn` instances use this GPU |
+| Persistence-M | `Off` | Persistence mode keeps the driver loaded even when nothing is using the GPU. It's usually turned on in production so the first request isn't slowed down by the driver starting up |
+| Bus-Id | `00000000:00:04.0` | The GPU's address on the machine's internal connection (PCIe). Useful for identifying a specific GPU in system logs |
+| Disp.A | `Off` | Whether a monitor is connected. Always off on servers |
+| Fan | `N/A` | Data center GPUs don't have their own fans. The server cools them |
+| Perf | `P8` | Performance state, from `P0` (maximum performance) to `P8` (idle, saving power). An idle GPU automatically drops to a low state |
+| Pwr:Usage/Cap | `13W / 70W` | Power used right now vs the maximum allowed. Under heavy load, a T4 gets close to 70W |
+| Compute M. | `Default` | Compute mode. `Default` allows multiple programs to use the GPU at the same time |
+| MIG M. | `N/A` | Multi-Instance GPU, a feature that splits one large GPU into several smaller, isolated GPUs. Only available on high-end GPUs such as the A100 and H100 |
+
+## Part 3 of the output: the processes table
+
+This table lists the programs currently using GPU memory, with how much each one uses. It's empty here because nothing is running yet.
+
+One thing that often surprises people: inside a container, this table may stay empty even while your application is clearly using the GPU. Containers are isolated from the host, so they can't see the host's list of processes. In that case, rely on the **Memory-Usage** field instead. It still shows the memory being used.
+
+## Useful variations of the command
+
+```bash
+# Standard output, as shown above
+nvidia-smi
+
+# Refresh the output every second (press Ctrl + C to stop)
+nvidia-smi -l 1
+
+# Show every available detail
+nvidia-smi -q
+
+# Show only selected fields as CSV, which is useful in scripts
+nvidia-smi --query-gpu=name,memory.used,memory.total,utilization.gpu,temperature.gpu,power.draw --format=csv
+```
+
+In Kubernetes, you can run the same command inside any pod that has been given a GPU:
+
+```bash
+kubectl exec -it <pod-name> -- nvidia-smi
+```
+
+## Key takeaways
+
+- `nvidia-smi` is the first command to run when working with or troubleshooting an NVIDIA GPU.
+- The output has three parts: the header (versions), the GPU table (status), and the processes table.
+- **CUDA Version** shows the newest CUDA the driver supports, not what's installed. The driver must be new enough for your application.
+- Check **Memory-Usage**, **GPU-Util**, **ECC errors**, and **Temp** first.
+- GPU-Util measures how often the GPU is busy, not how much of it is used.
+- The usable memory is a little less than the advertised size. Always plan with the number `nvidia-smi` shows.
+
+## What's next
+
+In Part 3, we run our first hands-on experiment: we deliberately fill the GPU's memory until it fails with a "CUDA out of memory" error, read the error, and then see why the memory isn't released right away after deleting our data.
