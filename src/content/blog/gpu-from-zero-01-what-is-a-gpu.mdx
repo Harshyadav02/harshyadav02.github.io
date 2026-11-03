@@ -1,98 +1,144 @@
 ---
 title: 'GPU from Zero, Part 1: What a GPU Actually Is'
 pubDate: 2026-11-03
-description: 'I have deployed GPU workloads on EKS without knowing what happens underneath. This series fixes that, starting from the very basics: what a GPU is, why AI runs on it, and why VRAM is the number that matters most.'
+description: 'A beginner-friendly introduction to GPUs: how they differ from CPUs, why AI runs on them, and why GPU memory (VRAM) is the number that matters most. No prior GPU knowledge needed.'
 tags: ['GPU', 'Kubernetes', 'Learning']
 author: 'Harsh Yadav'
 ---
 
-## Why I'm writing this series
+## About this series
 
-I've deployed a few workloads on GPU nodes in EKS. I set `nvidia.com/gpu: 1` in the pod spec, the pod landed on a `g4dn` node, and it worked. But if someone had asked me what actually happened behind that one line, I couldn't have answered.
+If you work with Kubernetes, there's a good chance you have already deployed something on a GPU node. You add `nvidia.com/gpu: 1` to the pod spec, the pod lands on a GPU machine, and it works. But what is actually happening underneath is often unclear.
 
-So I'm learning GPUs from the ground up, the way you learn the alphabet: one letter at a time. Each part of this series covers one idea. Later parts include labs where I break something on purpose, look at the error, fix it, and explain why the fix works.
+**GPU from Zero** is a series that explains GPUs step by step, starting from the very basics. Each part covers one idea, uses plain language, and builds on the previous part. Later parts include hands-on labs where we deliberately break things, read the errors, and fix them.
 
-This is part 1. No commands to run yet, just the mental model everything else builds on.
+No previous GPU knowledge is needed.
+
+**In this part, you will learn:**
+
+- What a GPU is and how it differs from a CPU
+- Why AI and machine learning run on GPUs
+- What GPU memory (VRAM) is, and why it's the most important number on a GPU
+- How to estimate whether an AI model will fit on a GPU
 
 ## CPU vs GPU
 
-Every computer has a **CPU**. It has a small number of very capable cores, usually somewhere between 8 and 64 on a server. Each core is fast and good at work full of decisions: running the operating system, handling an API request, branching through `if/else` logic.
+Every computer has a **CPU** (Central Processing Unit). It's the main processor that runs the operating system and your applications. A CPU has a small number of powerful **cores**. A core is a unit that can execute instructions independently. A typical server CPU has between 8 and 64 cores.
 
-A **GPU** takes the opposite approach. It has **thousands of small, simple cores**. Each one is much weaker than a CPU core, but they all run the same simple math at the same time, each on a different piece of data.
+Each CPU core is fast and flexible. It's good at work that involves many different steps and decisions, such as handling a web request, reading a file, or running business logic.
 
-An analogy that helped me: you have to check 10,000 exam papers against one answer key.
+A **GPU** (Graphics Processing Unit) takes a different approach. Instead of a few powerful cores, it has **thousands of small, simple cores**. Each one is much weaker than a CPU core, but they all work at the same time, each on a different piece of data.
 
-- **CPU:** one professor checks every paper, one after another. Smart, but slow.
-- **GPU:** 1,000 students each check 10 papers at the same time. Done in minutes.
+### A simple analogy
 
-A GPU wins when you have **a huge amount of the same simple work**. For varied, step-by-step work it loses, which is why every GPU server still has a CPU running the show.
+Imagine you need to grade 10,000 exam papers using the same answer key.
+
+- **The CPU approach:** one experienced professor grades every paper, one after another. Each paper is graded quickly and correctly, but the whole job takes a long time.
+- **The GPU approach:** 1,000 students each grade 10 papers at the same time. Each student is slower than the professor, but the whole job is done in minutes.
+
+This is the key idea:
+
+> A GPU is fast when there is **a large amount of the same simple work** that can be done in parallel.
+
+For varied, step-by-step work, a CPU is still the better tool. That's why every GPU server also has a CPU. The CPU runs the program and hands the heavy, repetitive calculations to the GPU.
 
 ![CPU vs GPU, RAM vs VRAM, and what happens when a model does not fit](/images/blog/gpu-from-zero/01-cpu-vs-gpu.webp)
 
 ## Why AI runs on GPUs
 
-GPUs were built for graphics. A 1080p screen has about 2 million pixels, redrawn 60 times a second, and every pixel needs the same kind of calculation. That's exactly the "huge amount of the same simple work" pattern.
+GPUs were originally designed for graphics. A Full HD screen has about 2 million pixels, and the screen is redrawn around 60 times per second. Every pixel needs a similar calculation, which is a perfect fit for thousands of cores working in parallel.
 
-Neural networks turned out to fit the same pattern. Training or running a model is mostly multiplying large tables of numbers (matrices) over and over. Graphics hardware happened to be very good at that, and that's how GPUs ended up running AI.
+AI models turned out to need the same kind of work. Under the hood, an AI model is mostly a very large collection of numbers, and running or training it means multiplying large tables of numbers (called **matrices**) again and again. This is the same "large amount of simple, repeated work" that GPUs are built for.
 
-For a sense of scale, the **NVIDIA T4** in AWS `g4dn` instances has **2,560 CUDA cores** for general parallel math and **320 Tensor Cores**, special units built only for matrix multiplication.
+To give a sense of scale, the **NVIDIA T4**, the GPU in AWS `g4dn` instances, has:
 
-## The GPU has its own memory: VRAM
+- **2,560 CUDA cores**, used for general parallel calculations
+- **320 Tensor Cores**, special units designed specifically for the matrix multiplications used in AI
 
-This is the part that matters most in day-to-day work.
+## GPU memory (VRAM)
 
-A GPU has its own memory, called **VRAM**, separate from the machine's RAM. The GPU can only work on data that sits in VRAM, so before anything happens, the model and the input data are **copied from RAM into VRAM** over the PCIe bus.
+This is the most important concept in this part.
 
-That leads to the most common GPU error you'll ever see. If the model doesn't fit in VRAM, PyTorch fails with:
+A GPU has its own dedicated memory, called **VRAM** (Video RAM). It's separate from the computer's main memory (RAM). The GPU can only work on data that is stored in its own VRAM.
+
+So before a GPU can do anything, the data must be copied from RAM into VRAM:
+
+1. The program loads the AI model and input data into normal RAM.
+2. The data is copied to the GPU's VRAM over a connection called **PCIe**.
+3. The GPU performs the calculations using the data in VRAM.
+
+This leads to the most common GPU problem you'll run into: **the model doesn't fit in VRAM**. When that happens, the program fails with an error like this:
 
 ```text
 torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.00 GiB.
-GPU 0 has a total capacity of 14.57 GiB
 ```
 
-There's a simple rule of thumb for checking whether a model will fit:
+Unlike RAM on a normal server, VRAM can't be extended with swap space. If the model doesn't fit, it won't run.
+
+### How to estimate whether a model fits
+
+AI model sizes are described by their number of **parameters**, the numbers the model has learned. For example, a "7B" model has 7 billion parameters.
+
+Each parameter takes up some memory. The most common format for running models, called **FP16** (16-bit floating point), uses **2 bytes per parameter**. That gives a simple rule of thumb:
 
 ```text
-memory for weights = number of parameters x bytes per parameter
+memory needed = number of parameters × bytes per parameter
 ```
 
-At FP16 precision each parameter takes 2 bytes, so:
+| Model size | Calculation | Memory needed | Fits on a T4 (16 GB)? |
+|---|---|---|---|
+| 7 billion parameters | 7 × 2 | 14 GB | Yes, just about |
+| 13 billion parameters | 13 × 2 | 26 GB | No |
 
-| Model | Weights in FP16 | Fits on a T4 (16 GB)? |
-|---|---|---|
-| 7B parameters | 7 x 2 = **14 GB** | Yes, just about |
-| 13B parameters | 13 x 2 = **26 GB** | No, out of memory |
+This only covers the model itself. A running model also needs extra memory for the data it is processing, so in practice you need some headroom beyond this number. We'll measure this in a later part.
 
-That's only the weights. Real workloads also need memory for activations, batches and caches, so a 7B model on a 16 GB T4 is tight in practice. We'll come back to that when we break things in a later part.
+### Common GPUs on AWS
 
-Common GPUs on AWS:
-
-| Instance family | GPU | VRAM |
+| EC2 instance family | GPU | VRAM per GPU |
 |---|---|---|
 | `g4dn` | NVIDIA T4 | 16 GB |
 | `g5` | NVIDIA A10G | 24 GB |
-| `p4d` | NVIDIA A100 | 40 GB (x8) |
+| `p4d` | NVIDIA A100 | 40 GB (8 GPUs per instance) |
 
-## Words to know
+## Connecting this to Kubernetes
 
-| Word | Meaning |
+When a pod requests a GPU like this:
+
+```yaml
+resources:
+  limits:
+    nvidia.com/gpu: 1
+```
+
+Kubernetes schedules the pod onto a node that has an available GPU and gives the pod **one entire GPU**, including all of its VRAM. By default, a GPU isn't shared between pods. Later parts of this series explain how that works and how GPUs can be shared.
+
+## Key terms
+
+| Term | Meaning |
 |---|---|
-| GPU | The chip with thousands of simple cores |
-| VRAM | The GPU's own memory |
-| CUDA | NVIDIA's platform that lets programs send work to the GPU |
-| Driver | Software that lets the operating system talk to the GPU |
-| `nvidia-smi` | Command that shows your GPUs, their memory and usage |
+| CPU | The main processor. A few powerful cores, good at varied tasks |
+| GPU | A processor with thousands of simple cores, good at parallel tasks |
+| Core | A unit inside a processor that executes instructions |
+| VRAM | The GPU's own memory. Models and data must fit here |
+| CUDA | NVIDIA's platform that lets software run calculations on the GPU |
+| Driver | Software that lets the operating system communicate with the GPU |
+| Parameter | One of the numbers an AI model has learned. "7B" means 7 billion |
+| FP16 | A number format that uses 2 bytes per value, common for running models |
 
-## Back to Kubernetes
+## Key takeaways
 
-When a pod asks for `nvidia.com/gpu: 1`, Kubernetes schedules it on a node that has a free GPU and gives it **one whole GPU**, including all of that GPU's VRAM. By default a GPU isn't shared between pods. Each upcoming part of this series explains another piece of what happens behind that single line.
+- A CPU has a few powerful cores. A GPU has thousands of simple cores working in parallel.
+- GPUs are fast for large amounts of repetitive work, which is exactly what AI models need.
+- The GPU can only use data stored in its own memory, VRAM.
+- If a model doesn't fit in VRAM, it fails with a "CUDA out of memory" error.
+- Quick estimate: parameters × 2 bytes (FP16) = memory needed for the model.
 
 ## Try it yourself
 
-You don't need your own GPU for this. Google Colab gives you a free T4:
+You don't need your own GPU to follow along. Google Colab provides a free NVIDIA T4:
 
 1. Open [colab.research.google.com](https://colab.research.google.com) and create a new notebook.
-2. Go to **Runtime → Change runtime type**, pick **T4 GPU**, and save.
-3. Run `!nvidia-smi` in a cell.
+2. Select **Runtime → Change runtime type**, choose **T4 GPU**, and click **Save**.
+3. Type `!nvidia-smi` in a cell and press **Shift + Enter**.
 
-Find the GPU name, the total memory, the driver version and the CUDA version. Part 2 goes through that output line by line.
+You'll see a table with details about the GPU. In Part 2, we go through that output line by line.
