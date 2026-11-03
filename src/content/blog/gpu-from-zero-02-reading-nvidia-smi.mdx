@@ -1,18 +1,33 @@
 ---
 title: 'GPU from Zero, Part 2: Reading nvidia-smi Field by Field'
 pubDate: 2026-11-03
-description: 'nvidia-smi is the first command you run on any GPU machine. Here is what every field in its output means, using real output from a free Colab T4, and why the CUDA version it shows is not what you think.'
+description: 'nvidia-smi is the first command to run on any GPU machine. This beginner-friendly guide explains every field in its output using a real example from a free Colab T4, and highlights the few fields you should check first.'
 tags: ['GPU', 'Kubernetes', 'Learning']
 author: 'Harsh Yadav'
 ---
 
-## The first command on any GPU machine
+## Introduction
 
-In [Part 1](/blog/gpu-from-zero-01-what-is-a-gpu) we covered what a GPU is and why VRAM matters. This part is about the one command you'll run more than any other when working with GPUs: `nvidia-smi`.
+In [Part 1](/blog/gpu-from-zero-01-what-is-a-gpu), we looked at what a GPU is and why its memory (VRAM) matters. In this part, we look at the most useful command for working with NVIDIA GPUs: `nvidia-smi`.
 
-Whether you're on a laptop, an EC2 instance, or inside a pod on a GPU node, `nvidia-smi` tells you which GPU you have, which driver is running, how much memory is in use, and whether the card is healthy. When something goes wrong with a GPU workload, this is where you start.
+`nvidia-smi` (NVIDIA System Management Interface) is a command-line tool that comes with the NVIDIA driver. It shows which GPUs a machine has, how much memory is being used, and whether the GPU is healthy. Whether you're on a laptop, a cloud VM, or inside a Kubernetes pod, this is usually the first command to run when working with or troubleshooting a GPU.
 
-I ran it on a free Google Colab notebook with a T4 GPU (**Runtime → Change runtime type → T4 GPU**, then `!nvidia-smi` in a cell). Here's the real output:
+**In this part, you will learn:**
+
+- How the `nvidia-smi` output is organised
+- What every field means, in plain language
+- The four fields to check first when something goes wrong
+- Why the "CUDA Version" shown is not what most people think
+
+## Running it yourself
+
+You can follow along for free using Google Colab:
+
+1. Open [colab.research.google.com](https://colab.research.google.com) and create a new notebook.
+2. Select **Runtime → Change runtime type**, choose **T4 GPU**, and click **Save**.
+3. Type `!nvidia-smi` in a cell and press **Shift + Enter**. The `!` tells Colab to run it as a shell command.
+
+This is the real output from that notebook:
 
 ```text
 +-----------------------------------------------------------------------------------------+
@@ -36,86 +51,132 @@ I ran it on a free Google Colab notebook with a T4 GPU (**Runtime → Change run
 +-----------------------------------------------------------------------------------------+
 ```
 
-It looks dense at first, but it's really a table: one header line, then one block per GPU, then a list of processes. The diagram below maps each field to what it means.
+It looks complex at first, but it has only three parts:
+
+1. **The header** (top line): driver and CUDA versions
+2. **The GPU table** (middle): one block per GPU, with its status
+3. **The processes table** (bottom): which programs are using the GPU
+
+The diagram below labels every field. The sections after it explain each one.
 
 ![Annotated nvidia-smi output from a Colab T4, with every field numbered and explained](/images/blog/gpu-from-zero/02-reading-nvidia-smi.webp)
 
-## The header: driver and CUDA version
+## Part 1 of the output: the header
 
 ```text
 | NVIDIA-SMI 580.82.07   Driver Version: 580.82.07   CUDA Version: 13.0 |
 ```
 
-**Driver Version** is the NVIDIA kernel driver installed on the machine. On Kubernetes, it lives on the node, either baked into the AMI (like the EKS GPU-optimized AMI) or installed by the NVIDIA GPU Operator.
+### Driver Version
 
-**CUDA Version** is the field that confuses almost everyone, me included. It does **not** mean CUDA 13.0 is installed. It means this driver supports CUDA applications up to version 13.0. The CUDA runtime your application actually uses comes from your environment, for example inside the PyTorch package or your container image.
+This is the version of the NVIDIA **driver**, the software that lets the operating system talk to the GPU. Without a driver, the GPU can't be used at all.
 
-That gives the most important compatibility rule in the whole GPU stack:
+In Kubernetes, the driver is installed on the node, not inside your container. It usually comes from the node image (for example, the Amazon EKS GPU-optimized AMI) or is installed by the NVIDIA GPU Operator.
 
-> The driver's CUDA version must be equal to or newer than the CUDA version your application was built with.
+### CUDA Version
 
-If you run a container built for CUDA 13.x on a node whose driver only supports CUDA 12.2, you get:
+This field is often misunderstood.
 
-```text
-CUDA driver version is insufficient for CUDA runtime version
-```
+**CUDA** is NVIDIA's platform that lets applications run calculations on the GPU. Applications such as PyTorch are built against a specific CUDA version.
 
-A newer driver with an older CUDA app works fine. An older driver with a newer CUDA app breaks. We'll trigger that error on purpose in a later part.
+The CUDA Version shown here does **not** mean CUDA 13.0 is installed. It means:
 
-## The GPU block
+> This driver can run applications built for CUDA **13.0 or older**.
 
-Each GPU gets two rows. Here's every field from my T4:
+The CUDA version your application actually uses is packaged with the application itself, for example inside the PyTorch library or inside your container image.
 
-| Field | Value | What it means |
+This gives us one of the most important rules when working with GPUs:
+
+> The driver must support a CUDA version **equal to or newer than** the one your application was built with.
+
+| Driver supports | Application built with | Result |
 |---|---|---|
-| GPU | `0` | Index of the GPU. Multi-GPU machines show 0, 1, 2... |
-| Name | `Tesla T4` | The model. T4 is what AWS `g4dn` instances use |
-| Persistence-M | `Off` | Persistence mode keeps the driver loaded even when nothing uses the GPU. Production nodes usually have it on to avoid a slow first call |
-| Bus-Id | `00000000:00:04.0` | The card's PCIe address. Useful when kernel logs (`dmesg`) report an error for a specific card |
-| Disp.A | `Off` | Whether a display is attached. Always off on servers |
-| Volatile Uncorr. ECC | `0` | Uncorrectable memory errors since the driver loaded. Anything above 0 is a hardware problem, and the node should be drained |
-| Fan | `N/A` | Datacenter cards have no fan of their own, the server cools them |
-| Temp | `36C` | Temperature |
-| Perf | `P8` | Performance (power) state. `P0` is full speed, `P8` is idle. An idle GPU drops to a low state to save power |
-| Pwr:Usage/Cap | `13W / 70W` | Power drawn now vs the card's limit. The T4 is a low-power card; under load it gets close to 70W |
-| Memory-Usage | `0MiB / 15360MiB` | VRAM used vs total |
-| GPU-Util | `0%` | Explained below, it's misleading |
-| Compute M. | `Default` | Compute mode. `Default` lets many processes share the GPU. `Exclusive_Process` allows only one |
-| MIG M. | `N/A` | Multi-Instance GPU, a way to split one big GPU into isolated slices. Only on cards like A100 and H100, so N/A on a T4 |
+| CUDA 13.0 | CUDA 12.4 | Works. An older application on a newer driver is fine |
+| CUDA 12.2 | CUDA 13.0 | Fails with `CUDA driver version is insufficient for CUDA runtime version` |
+
+If you ever see that error in a pod, the node's driver is too old for your container image. We'll reproduce this error on purpose later in the series.
+
+## Part 2 of the output: the GPU table
+
+Each GPU gets its own block of two rows. The column headers at the top tell you what each value means. For example, `Temp` in the header row lines up with `36C` in the data row.
+
+### The four fields to check first
+
+When something isn't working, start with these:
+
+| Field | Value here | What it tells you | What to look for |
+|---|---|---|---|
+| **Memory-Usage** | `0MiB / 15360MiB` | VRAM used vs total available | Close to the total means you're about to hit "out of memory" errors |
+| **GPU-Util** | `0%` | How busy the GPU has been recently | 0% while your app is running means the GPU isn't being used |
+| **Volatile Uncorr. ECC** | `0` | Memory errors the GPU couldn't correct | Any number above 0 points to a hardware fault |
+| **Temp** | `36C` | GPU temperature | Very high temperatures cause the GPU to slow itself down |
 
 ### Why 15360 MiB and not 16 GB?
 
-The T4 is sold as a 16 GB card, but `nvidia-smi` shows 15360 MiB, which is exactly 15 GiB. Part of the physical memory is reserved by the card and the driver and isn't available to your programs. When you calculate whether a model fits (the rule of thumb from Part 1), use the number `nvidia-smi` shows, not the number on the spec sheet. Your framework will see slightly less again, because of the memory each process needs just to start using CUDA.
+The T4 is sold as a 16 GB GPU, but `nvidia-smi` shows 15360 MiB, which is exactly 15 GiB. A portion of the physical memory is reserved by the GPU and its driver, so it isn't available to applications.
 
-### GPU-Util does not mean what it looks like
+When checking whether a model will fit (using the rule of thumb from Part 1), always use the number `nvidia-smi` reports, not the number on the product page.
 
-`GPU-Util` is the percentage of time, over the last sample period, during which **at least one kernel was running** on the GPU. It doesn't say how many of the 2,560 cores were busy.
+### GPU-Util can be misleading
 
-A tiny program that keeps launching small kernels can show 100% GPU-Util while using a small fraction of the GPU. So "100% util" doesn't mean "GPU fully used", and it's a poor metric on its own for autoscaling or capacity planning. Better metrics come later in the series, when we get to DCGM and Prometheus.
+It's natural to read `GPU-Util: 100%` as "the GPU is fully used". That isn't what it measures.
 
-## The processes table
+GPU-Util is the **percentage of time** during which the GPU was running at least one task. It doesn't say **how much** of the GPU was used during that time. A small program that keeps the GPU slightly busy all the time can show 100%, even though most of the GPU's cores are idle.
 
-The bottom table lists processes currently holding GPU memory. Here it's empty because nothing was running yet.
+Think of it like a shop that's "open 100% of the day" but has only one customer at a time. It's always open, but far from full. GPU-Util is useful as a first signal, but it shouldn't be the only metric used for decisions like autoscaling. Later in the series, we look at better metrics.
 
-Inside containers you'll often see this table empty even while your app is clearly using the GPU. That's because the container has its own PID namespace, so it can't see the host's process IDs. Memory-Usage will still show the memory being used, which is the more reliable signal.
+### All other fields
 
-## Commands worth remembering
+| Field | Value here | Meaning |
+|---|---|---|
+| GPU | `0` | The GPU's index number. The first GPU is 0, the second is 1, and so on |
+| Name | `Tesla T4` | The GPU model. AWS `g4dn` instances use this GPU |
+| Persistence-M | `Off` | Persistence mode keeps the driver loaded even when nothing is using the GPU. It's usually turned on in production so the first request isn't slowed down by the driver starting up |
+| Bus-Id | `00000000:00:04.0` | The GPU's address on the machine's internal connection (PCIe). Useful for identifying a specific GPU in system logs |
+| Disp.A | `Off` | Whether a monitor is connected. Always off on servers |
+| Fan | `N/A` | Data center GPUs don't have their own fans. The server cools them |
+| Perf | `P8` | Performance state, from `P0` (maximum performance) to `P8` (idle, saving power). An idle GPU automatically drops to a low state |
+| Pwr:Usage/Cap | `13W / 70W` | Power used right now vs the maximum allowed. Under heavy load, a T4 gets close to 70W |
+| Compute M. | `Default` | Compute mode. `Default` allows multiple programs to use the GPU at the same time |
+| MIG M. | `N/A` | Multi-Instance GPU, a feature that splits one large GPU into several smaller, isolated GPUs. Only available on high-end GPUs such as the A100 and H100 |
+
+## Part 3 of the output: the processes table
+
+This table lists the programs currently using GPU memory, with how much each one uses. It's empty here because nothing is running yet.
+
+One thing that often surprises people: inside a container, this table may stay empty even while your application is clearly using the GPU. Containers are isolated from the host, so they can't see the host's list of processes. In that case, rely on the **Memory-Usage** field instead. It still shows the memory being used.
+
+## Useful variations of the command
 
 ```bash
-nvidia-smi                 # the snapshot above
-nvidia-smi -l 1            # refresh every second
-nvidia-smi -q              # every detail, long form
+# Standard output, as shown above
+nvidia-smi
 
-# just the numbers, as CSV (good for scripts)
+# Refresh the output every second (press Ctrl + C to stop)
+nvidia-smi -l 1
+
+# Show every available detail
+nvidia-smi -q
+
+# Show only selected fields as CSV, which is useful in scripts
 nvidia-smi --query-gpu=name,memory.used,memory.total,utilization.gpu,temperature.gpu,power.draw --format=csv
 ```
 
-On Kubernetes, the same command works inside any pod that has been given a GPU:
+In Kubernetes, you can run the same command inside any pod that has been given a GPU:
 
 ```bash
-kubectl exec -it <gpu-pod> -- nvidia-smi
+kubectl exec -it <pod-name> -- nvidia-smi
 ```
 
-## Next
+## Key takeaways
 
-Now that we can read the dashboard, Part 3 breaks something for the first time: filling the T4's VRAM until PyTorch crashes with `CUDA out of memory`, then finding out why the memory doesn't come back when you delete your tensors.
+- `nvidia-smi` is the first command to run when working with or troubleshooting an NVIDIA GPU.
+- The output has three parts: the header (versions), the GPU table (status), and the processes table.
+- **CUDA Version** shows the newest CUDA the driver supports, not what's installed. The driver must be new enough for your application.
+- Check **Memory-Usage**, **GPU-Util**, **ECC errors**, and **Temp** first.
+- GPU-Util measures how often the GPU is busy, not how much of it is used.
+- The usable memory is a little less than the advertised size. Always plan with the number `nvidia-smi` shows.
+
+## What's next
+
+In Part 3, we run our first hands-on experiment: we deliberately fill the GPU's memory until it fails with a "CUDA out of memory" error, read the error, and then see why the memory isn't released right away after deleting our data.
