@@ -4,7 +4,7 @@ import sitemap from '@astrojs/sitemap';
 import tailwind from '@astrojs/tailwind';
 
 export default defineConfig({
-  site: 'https://harshyadav.me',
+  site: 'https://www.harshyadav.me',
   integrations: [
     mdx(),
     sitemap(),

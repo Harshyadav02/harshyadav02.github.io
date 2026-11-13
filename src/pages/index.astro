@@ -2,11 +2,12 @@
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
 import BlogCard from '../components/BlogCard.astro';
+import Skills from '../components/Skills.astro';
 import { getCollection } from 'astro:content';
+import { sortPosts } from '../lib/utils';
+import { profile } from '../data/profile';
 
-const posts = (await getCollection('blog', ({ data }) => !data.draft))
-  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-  .slice(0, 3);
+const posts = sortPosts(await getCollection('blog', ({ data }) => !data.draft)).slice(0, 3);
 ---
 
 <Layout title="Harsh Yadav">
@@ -36,4 +37,16 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft))
     </div>
   </section>
 
+  <Skills />
+
+  <section id="contact" class="mx-auto max-w-content px-5 sm:px-8 py-16 border-t border-border/60 scroll-mt-16">
+    <p class="log-eyebrow mb-3">contact.open</p>
+    <h2 class="font-mono text-2xl text-ink">{profile.contact.heading}</h2>
+    <p class="mt-3 text-ink-muted leading-7 max-w-xl">{profile.contact.body}</p>
+    <div class="mt-6 flex flex-wrap gap-3">
+      <a href={`mailto:${profile.email}`} class="btn-primary">Email me</a>
+      <a href={profile.social.linkedin} target="_blank" rel="noopener noreferrer" class="btn-secondary">LinkedIn ↗</a>
+      <a href={profile.social.github} target="_blank" rel="noopener noreferrer" class="btn-secondary">GitHub ↗</a>
+    </div>
+  </section>
 </Layout>
