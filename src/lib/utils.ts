@@ -19,3 +19,10 @@ export function slugify(input: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
 }
+
+/** Newest first; posts sharing a pubDate fall back to id (descending) so order is stable. */
+export function sortPosts<T extends { id: string; data: { pubDate: Date } }>(posts: T[]): T[] {
+  return [...posts].sort(
+    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf() || b.id.localeCompare(a.id)
+  );
+}

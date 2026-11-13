@@ -1,10 +1,9 @@
 import rss from '@astrojs/rss';
+import { sortPosts } from '../lib/utils';
 import { getCollection } from 'astro:content';
 
 export async function GET(context) {
-  const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
-    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-  );
+  const posts = sortPosts(await getCollection('blog', ({ data }) => !data.draft));
 
   return rss({
     title: 'Harsh Yadav — Blog',

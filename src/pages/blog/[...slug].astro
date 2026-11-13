@@ -26,6 +26,8 @@ const { Content, headings } = await render(post);
   tags={post.data.tags}
   body={post.body}
   headings={headings}
+  author={post.data.author}
+  canonicalUrl={post.data.canonicalUrl}
 >
   <Content />
 </BlogPost>

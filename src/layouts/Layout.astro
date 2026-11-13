@@ -8,16 +8,18 @@ export interface Props {
   description?: string;
   ogImage?: string;
   article?: boolean;
+  canonical?: string;
 }
 
 const {
   title,
   description = 'Harsh Yadav — Site Reliability Engineer working on Kubernetes platforms, cloud infrastructure, and observability.',
   article = false,
+  canonical,
 } = Astro.props;
 
 const pageTitle = title === 'Harsh Yadav' ? title : `${title} · Harsh Yadav`;
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const canonicalURL = canonical ? new URL(canonical) : new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>

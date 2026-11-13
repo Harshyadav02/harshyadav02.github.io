@@ -13,6 +13,9 @@ const blog = defineCollection({
       tags: z.array(z.string()).default([]),
       draft: z.boolean().default(false),
       author: z.string().default('Harsh Yadav'),
+      // Set when the post was first published elsewhere (e.g. the CloudRaft blog)
+      // so search engines credit the original instead of flagging duplicate content.
+      canonicalUrl: z.url().optional(),
       heroImage: image().optional(),
     }),
 });

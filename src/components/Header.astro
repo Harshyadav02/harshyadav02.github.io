@@ -6,7 +6,12 @@ const navItems = [
   { label: 'Contact', href: '/#contact' },
 ];
 
-const currentPath = new URL(Astro.request.url).pathname;
+// Normalise trailing slash so /about and /about/ match, and treat nested
+// routes (e.g. /blog/some-post/) as belonging to their section.
+const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const isActive = (href: string) =>
+  !href.includes('#') &&
+  (href === '/' ? currentPath === '/' : currentPath === href || currentPath.startsWith(`${href}/`));
 ---
 
 <header class="sticky top-0 z-40 border-b border-border/60 bg-bg/80 backdrop-blur-md">
@@ -19,10 +24,11 @@ const currentPath = new URL(Astro.request.url).pathname;
     <nav class="hidden md:flex items-center gap-1 font-mono text-sm" aria-label="Main">
       {
         navItems.map((item) => {
-          const active = currentPath === item.href;
+          const active = isActive(item.href);
           return (
             <a
               href={item.href}
+              aria-current={active ? 'page' : undefined}
               class:list={[
                 'px-3 py-2 rounded-md transition-colors',
                 active ? 'text-mint' : 'text-ink-muted hover:text-ink',
